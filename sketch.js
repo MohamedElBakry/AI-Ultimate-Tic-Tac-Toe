@@ -1,7 +1,8 @@
 /* UTTT
 * 9 by 9 board -- Yay! 😀
-* validation function update -- Next up! 😄
+* validation function update -- Done! 😄
 * win game function update -- Yes 😁
+* Minimax 😎.
 */
 
 
@@ -95,8 +96,16 @@ function draw() {
 
   }
 
-  drawSubBoardWin(board, getNext(currentPlayer));
-  const isDrawn = isDraw(board); 
+  drawSubBoardWins(board, getNext(currentPlayer));
+
+  const winner = boardWinCheck();
+  if (winner) {
+    print("VICTORY FOR", getSymbol(winner));
+    noLoop();
+    game.gameOver = true;
+  }
+
+  const isDrawn = isDraw(board);
   game.draw = isDrawn;
 }
 
@@ -128,7 +137,7 @@ function mouseClicked() {
 // }
 
 // Find winning line(s)
-function drawSubBoardWin(board, player) {
+function drawSubBoardWins(board) {
 
   for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
     for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
@@ -153,7 +162,6 @@ function subBoardWinCheck(board, _line, yOffset, xOffset) {
     && board[_line[2][0] + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.X) {
       winner = game.X;
   }
-
   else if (board[_line[0][0] + (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.O
     && board[_line[1][0] + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.O
     && board[_line[2][0] + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.O) {
@@ -161,6 +169,26 @@ function subBoardWinCheck(board, _line, yOffset, xOffset) {
   }
 
   return winner;
+}
+
+
+// Check if there's a winner across all boards
+function boardWinCheck() {
+
+  for (const player of players) {
+    for (let _line = 0; _line < winningLines.length; _line++) {
+      if (subBoardStates[winningLines[_line][0][0]][winningLines[_line][0][1]] == player 
+        && subBoardStates[winningLines[_line][1][0]][winningLines[_line][1][1]] == player 
+        && subBoardStates[winningLines[_line][2][0]][winningLines[_line][2][1]] == player) {
+          return player;
+      }
+    }
+  }
+
+}
+
+function subBoardIsFull(board, yOffset, xOffset) {
+  
 }
 
 
@@ -196,18 +224,24 @@ function getNext(player) {
 function isValid(movex, movey, board) {
 
   // previousMove has not been set yet, so it's the first move of the game and is always valid
-  if (game.previousMove === null)
+  if (game.previousMove === null) {
     return true;
+  }
 
   const square = board[movex][movey];
-  const desiredSubBoard = getParentSubBoard(movex, movey);
+  const pickedSubBoard = getParentSubBoard(movex, movey);
   const subBoardToPlay = nextCorrespondingSubBoard(game.previousMove.x, game.previousMove.y);
-  const isCorrectSubBoard = desiredSubBoard.x == subBoardToPlay.x && desiredSubBoard.y == subBoardToPlay.y;
-  const isEmptySubBoard = subBoardStates[desiredSubBoard.x][desiredSubBoard.y] == game.none;
+  const isCorrectSubBoard = pickedSubBoard.x == subBoardToPlay.x && pickedSubBoard.y == subBoardToPlay.y;
+  const isEmptySubBoard = subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
 
   if (square == game.none && isEmptySubBoard && isCorrectSubBoard) {
     return true;
-  }
+  } 
+
+  // If a player is sent to a won or **drawn** sub-board, they can play anywhere
+  // todo: apply if drawn sub-board 
+  if (subBoardStates[subBoardToPlay.x][subBoardToPlay.y] != game.none && !isCorrectSubBoard)
+    return true;
   
   return false;
 }

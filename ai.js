@@ -33,15 +33,18 @@ function _bestMove() {
 
 function _minimax(depth, board, isMaxing) {
   let result = evaluation(board);
-  if (result !== null)
+  if (result !== null || depth == 0)
     return result;
   
   if (isMaxing) {
     let maxScore = -Infinity;
     for (const move of getMoves(board)) {
-      board[move.x][move.y] = game.X;
+      // board[move.x][move.y] = game.X;
+      const truePreviousMove = game.previousMove;
+      makeMove(move, board, game.X);
       let score = _minimax(depth, board, false);
       board[move.x][move.y] = game.none;
+      game.previousMove = truePreviousMove;
       maxScore = max(maxScore, score);
     }
 
@@ -49,9 +52,12 @@ function _minimax(depth, board, isMaxing) {
   } else {
     let minScore = Infinity;
     for (const move of getMoves(board)) {
-      board[move.x][move.y] = game.O;
+      // board[move.x][move.y] = game.O;
+      let truePreviousMove = game.previousMove;
+      makeMove(move, board, game.O);
       let score = _minimax(depth, board, true);
       board[move.x][move.y] = game.none;
+      game.previousMove = truePreviousMove;
       minScore = min(minScore, score);
     }
 
@@ -72,18 +78,37 @@ function getMoves(board) {
     return moves;
 }
 
+function makeMove(move, board, player) {
+  board[move.x][move.y] = player;
+  game.previousMove = move;
+}
+
+
+
 // TODO: Update evaluation function as drawSubBoardWin's functionallity has changed.
 // As has the game.
+
+// Evaluate the current state of the game.
 function evaluation(board) {
     let evalu = null;
     const player = game.X;
 
-    if (drawSubBoardWin(board, player)[0])
+    // Loop over subBoardStates
+
+    if (drawSubBoardWins(board, player)[0])
         evalu = 1;
     else if (isDraw(board)) 
         evalu = 0;
-    else if (drawSubBoardWin(board, getNext(player))[0])
+    else if (drawSubBoardWins(board, getNext(player))[0])
         evalu = -1;
 
+  for (let xOffset = 0; x < 3; x++) {
+    for (let yOffset = 0; y < 3; y++) {
+      for (const _line of winningLines) {
+        let winner = subBoardWinCheck(board, _line, yOffset, xOffset);
+        // we win +1, they -1, draw 0;
+      }
+    }
+  }
     return evalu;
 }
