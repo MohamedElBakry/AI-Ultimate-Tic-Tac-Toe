@@ -72,15 +72,17 @@ function getMoves(board) {
     return moves;
 }
 
+// TODO: Update evaluation function as drawSubBoardWin's functionallity has changed.
+// As has the game.
 function evaluation(board) {
     let evalu = null;
     const player = game.X;
 
-    if (gridWin(board, player)[0])
+    if (drawSubBoardWin(board, player)[0])
         evalu = 1;
     else if (isDraw(board)) 
         evalu = 0;
-    else if (gridWin(board, getNext(player))[0])
+    else if (drawSubBoardWin(board, getNext(player))[0])
         evalu = -1;
 
     return evalu;

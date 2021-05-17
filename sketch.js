@@ -1,8 +1,7 @@
 /* UTTT
-* 9 by 9 board
-* validation function update
-* win game function update
-*
+* 9 by 9 board -- Yay! 😀
+* validation function update -- Next up! 😄
+* win game function update -- Yes 😁
 */
 
 const game = {
@@ -94,13 +93,13 @@ function draw() {
 
   }
 
-  const [gameOver, winningLine] = gridWin(board, getNext(currentPlayer));
-  game.gameOver = gameOver;
+ drawSubBoardWin(board, getNext(currentPlayer));
+  // game.gameOver = gameOver;
 
-  if (game.gameOver || game.draw) {
-    drawSubgrid(winningLine);
-    noLoop();
-  }
+  // if (game.gameOver || game.draw) {
+  //   drawSubgrid(winningLine);
+  //   // noLoop();
+  // }
 
   const isDrawn = isDraw(board); 
   game.draw = isDrawn;
@@ -128,21 +127,31 @@ function mouseClicked() {
 }
 
 // Find a winning line for a specific player
-function gridWin(board, player) {
+// TODO: maybe split function into subBoardIsWon and drawWin(subBoard)
+function drawSubBoardWin(board, player) {
 
   for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
     for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
       for (const _line of winningLines) {
 
-        if (board[_line[0][0] +  (yOffset * 3)][_line[0][1] + (xOffset * 3)] == player 
-        && board[_line[1][0]  + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == player
-        && board[_line[2][0]  + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == player) {  
-          return [true, _line];
+        if (board[_line[0][0] +  (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.X 
+        && board[_line[1][0]  + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.X
+        && board[_line[2][0]  + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.X) {
+          drawSubgrid(_line, xOffset * 3, yOffset * 3);
+          subBoardStates[yOffset][xOffset] = game.X;
         }
+
+        else if (board[_line[0][0] +  (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.O 
+        && board[_line[1][0]  + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.O
+        && board[_line[2][0]  + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.O) {
+          drawSubgrid(_line, xOffset * 3, yOffset * 3);
+          subBoardStates[yOffset][xOffset] = game.O;
+        }
+
       }
     }
   }
-  return [false, null];
+  
 }
 
 
@@ -151,7 +160,7 @@ function isDraw(board) {
 }
 
 
-function drawSubgrid(winningLine) {
+function drawSubgrid(winningLine, xOffset, yOffset) {
 
   if (!winningLine)
     return;
@@ -163,7 +172,8 @@ function drawSubgrid(winningLine) {
 
   strokeWeight(7);
   stroke(0, 220, 0);
-  line(wh * (wl[0][1] + xoffset), wh * (wl[0][0] + yoffset), wh * (wl[2][1] + xoffset), wh * (wl[2][0] + yoffset));
+  line(wh * (wl[0][1] + xoffset + xOffset), wh * (wl[0][0] + yoffset + yOffset),
+  wh * (wl[2][1] + xoffset + xOffset), wh * (wl[2][0] + yoffset + yOffset));
 }
 
 
@@ -202,9 +212,12 @@ function printState(board) {
 
 
 function isValid(movex, movey, board) {
-  let pos = board[movex][movey];
-  if (pos == game.none)
+  const pos = board[movex][movey];
+  const isEmptySubBoard = subBoardStates[floor(movex / 3)][floor(movey / 3)] == game.none;
+
+  if (pos == game.none && isEmptySubBoard) {
     return true;
+  }
   
   return false;
 }
