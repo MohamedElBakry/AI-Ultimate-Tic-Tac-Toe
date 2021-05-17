@@ -85,24 +85,3 @@ function evaluation(board) {
 
     return evalu;
 }
-
-
-// Find a winning line for a specific player
-function gridWin(board, player) {
-
-    for (const _line of winningLines) {
-  
-      if (board[_line[0][0]][_line[0][1]] == player 
-        && board[_line[1][0]][_line[1][1]] == player
-        && board[_line[2][0]][_line[2][1]] == player) {  
-          return [true, _line];
-      }
-    }
-  
-    return [false, null];
-  }
-
-
-function isDraw(board) {
-   return board.every( (row) => row.every( (square) => square != game.none));
-}

@@ -21,7 +21,9 @@ const subBoard = [
 
 const subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
-const board = subBoard.map( () => { return subBoard } );
+// Create a 9 by 9 board
+// by copying the subBoard 9 times to create 9 rows and columns.
+const board = subBoard.map( () => [...subBoard] );
 
 // const board = subBoardStates;
 
@@ -33,7 +35,7 @@ const getSymbol = (n) => (n == game.X ? "X" : "O");
 
 
 function setup() {
-  createCanvas(600, 600);
+  createCanvas(700, 700);
   // currentPlayer = random(players);
   currentPlayer = game.O;
   // _bestMove();
@@ -113,7 +115,6 @@ function mouseClicked() {
   if (!isValid(y, x, board) || game.gameOver || game.draw) {
     print("draw:", game.draw);
     print("victory: ", game.gameOver, getSymbol(getNext(currentPlayer)));
-
     return;
   }
 
@@ -124,6 +125,29 @@ function mouseClicked() {
 
   // _bestMove();
 
+}
+
+// Find a winning line for a specific player
+function gridWin(board, player) {
+
+  for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
+    for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
+      for (const _line of winningLines) {
+
+        if (board[_line[0][0] +  (yOffset * 3)][_line[0][1] + (xOffset * 3)] == player 
+        && board[_line[1][0]  + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == player
+        && board[_line[2][0]  + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == player) {  
+          return [true, _line];
+        }
+      }
+    }
+  }
+  return [false, null];
+}
+
+
+function isDraw(board) {
+ return board.every( (row) => row.every( (square) => square != game.none));
 }
 
 
@@ -167,7 +191,10 @@ function printState(board) {
       else
         rowStr += "_, ";
 
+      if ( (y + 1) % 3 == 0)
+        rowStr += "| ";
     }
+
     console.log(rowStr);
   }
 
