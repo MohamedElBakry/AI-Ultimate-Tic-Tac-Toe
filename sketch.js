@@ -126,32 +126,45 @@ function mouseClicked() {
 
 }
 
-// Find a winning line for a specific player
-// TODO: maybe split function into subBoardIsWon and drawWin(subBoard)
+// Mobile support
+// function touchStarted() {
+//   mouseClicked();
+// }
+
+// Find winning line(s)
 function drawSubBoardWin(board, player) {
 
   for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
     for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
       for (const _line of winningLines) {
 
-        if (board[_line[0][0] +  (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.X 
-        && board[_line[1][0]  + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.X
-        && board[_line[2][0]  + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.X) {
-          drawSubgrid(_line, xOffset * 3, yOffset * 3);
-          subBoardStates[yOffset][xOffset] = game.X;
-        }
+        let winner = subBoardWinCheck(board, _line, yOffset, xOffset);
+        if (!winner) continue; 
 
-        else if (board[_line[0][0] +  (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.O 
-        && board[_line[1][0]  + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.O
-        && board[_line[2][0]  + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.O) {
-          drawSubgrid(_line, xOffset * 3, yOffset * 3);
-          subBoardStates[yOffset][xOffset] = game.O;
-        }
-
+        subBoardStates[yOffset][xOffset] = winner;
+        drawSubgridWin(_line, xOffset * 3, yOffset * 3);
       }
     }
   }
-  
+}
+
+
+function subBoardWinCheck(board, _line, yOffset, xOffset) {
+  let winner = null;
+
+  if (board[_line[0][0] + (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.X
+    && board[_line[1][0] + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.X
+    && board[_line[2][0] + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.X) {
+      winner = game.X;
+  }
+
+  else if (board[_line[0][0] + (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.O
+    && board[_line[1][0] + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.O
+    && board[_line[2][0] + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.O) {
+      winner = game.O;
+  }
+
+  return winner;
 }
 
 
@@ -160,13 +173,13 @@ function isDraw(board) {
 }
 
 
-function drawSubgrid(winningLine, xOffset, yOffset) {
+function drawSubgridWin(_line, xOffset, yOffset) {
 
-  if (!winningLine)
+  if (!_line)
     return;
 
   const wh = width / boardLen;
-  const wl = winningLine;
+  const wl = _line;
   const xoffset = 0.5;
   const yoffset = 0.5;
 
