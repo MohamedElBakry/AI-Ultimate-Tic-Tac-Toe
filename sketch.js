@@ -4,12 +4,14 @@
 * win game function update -- Yes 😁
 */
 
+
 const game = {
   none: 0,
   X: 1,
   O: 2,
   gameOver: false,
-  draw: false
+  draw: false,
+  previousMove: null
 };
 
 const subBoard = [
@@ -93,34 +95,28 @@ function draw() {
 
   }
 
- drawSubBoardWin(board, getNext(currentPlayer));
-  // game.gameOver = gameOver;
-
-  // if (game.gameOver || game.draw) {
-  //   drawSubgrid(winningLine);
-  //   // noLoop();
-  // }
-
+  drawSubBoardWin(board, getNext(currentPlayer));
   const isDrawn = isDraw(board); 
   game.draw = isDrawn;
-
 }
 
 
 function mouseClicked() {
-  const x = floor(mouseX / (width / boardLen));
-  const y = floor(mouseY / (height / boardLen));
+  const y = floor(mouseX / (width / boardLen));
+  const x = floor(mouseY / (height / boardLen));
 
-  if (!isValid(y, x, board) || game.gameOver || game.draw) {
+  if (!isValid(x, y, board) || game.gameOver || game.draw) {
     print("draw:", game.draw);
     print("victory: ", game.gameOver, getSymbol(getNext(currentPlayer)));
     return;
   }
 
-  board[y][x] = currentPlayer;
-
+  board[x][y] = currentPlayer;
+  game.previousMove = {y, x};
   currentPlayer = getNext(currentPlayer);
   printState(board);
+  // print(x, y);
+  print(nextCorrespondingSubBoard(x, y));
 
   // _bestMove();
 
@@ -191,11 +187,46 @@ function drawSubgridWin(_line, xOffset, yOffset) {
 
 
 function getNext(player) {
-
   if (player == game.X)
     return game.O
   
   return game.X;
+}
+
+function isValid(movex, movey, board) {
+
+  // previousMove has not been set yet, so it's the first move of the game and is always valid
+  if (game.previousMove === null)
+    return true;
+
+  const square = board[movex][movey];
+  const desiredSubBoard = getParentSubBoard(movex, movey);
+  const subBoardToPlay = nextCorrespondingSubBoard(game.previousMove.x, game.previousMove.y);
+  const isCorrectSubBoard = desiredSubBoard.x == subBoardToPlay.x && desiredSubBoard.y == subBoardToPlay.y;
+  const isEmptySubBoard = subBoardStates[desiredSubBoard.x][desiredSubBoard.y] == game.none;
+
+  if (square == game.none && isEmptySubBoard && isCorrectSubBoard) {
+    return true;
+  }
+  
+  return false;
+}
+
+
+// Return the coordinates of the move's/square's sub-board.
+function getParentSubBoard(movex, movey) {
+  const x = floor(movex / 3);
+  const y = floor(movey / 3);
+  return {x, y};
+}
+
+
+// Return which sub-board the next move should be played in.
+function nextCorrespondingSubBoard(movex, movey) {
+  const x = movex % 3;
+  const y = movey % 3;
+
+  return {x, y};
 }
 
 
@@ -221,16 +252,4 @@ function printState(board) {
     console.log(rowStr);
   }
 
-}
-
-
-function isValid(movex, movey, board) {
-  const pos = board[movex][movey];
-  const isEmptySubBoard = subBoardStates[floor(movex / 3)][floor(movey / 3)] == game.none;
-
-  if (pos == game.none && isEmptySubBoard) {
-    return true;
-  }
-  
-  return false;
 }
