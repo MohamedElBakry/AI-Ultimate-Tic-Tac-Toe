@@ -127,7 +127,7 @@ function mouseClicked() {
   // print(x, y);
   print(nextCorrespondingSubBoard(x, y));
 
-  // _bestMove();
+  // _bestMove(); 
 
 }
 
@@ -188,7 +188,7 @@ function boardWinCheck() {
 }
 
 function subBoardIsFull(board, yOffset, xOffset) {
-  
+  // let subBoardSquares = board.filter( () => print)
 }
 
 
@@ -240,7 +240,7 @@ function isValid(movex, movey, board) {
 
   // If a player is sent to a won or **drawn** sub-board, they can play anywhere
   // todo: apply if drawn sub-board 
-  if (subBoardStates[subBoardToPlay.x][subBoardToPlay.y] != game.none && !isCorrectSubBoard)
+  if (subBoardStates[subBoardToPlay.x][subBoardToPlay.y] != game.none && !isCorrectSubBoard && square == game.none)
     return true;
   
   return false;
