@@ -2,7 +2,9 @@
 * 9 by 9 board -- Yay! 😀
 * validation function update -- Done! 😄
 * win game function update -- Yes 😁
+*
 * Minimax 😎.
+* * DrawCheck on subBoard
 */
 
 
@@ -123,7 +125,7 @@ function mouseClicked() {
   board[x][y] = currentPlayer;
   game.previousMove = {y, x};
   currentPlayer = getNext(currentPlayer);
-  printState(board);
+  // printState(board);
   // print(x, y);
   print(nextCorrespondingSubBoard(x, y));
 
@@ -187,8 +189,15 @@ function boardWinCheck() {
 
 }
 
-function subBoardIsFull(board, yOffset, xOffset) {
-  // let subBoardSquares = board.filter( () => print)
+function getSubBoardSquares(board, xOffset, yOffset) {
+  const x = xOffset * 3;
+  const y = yOffset * 3;
+  let subBoardSquares = [];
+  
+  for (const sb of board.filter( (_, i) => i == x || i == x + 1 || i == x + 2))
+    subBoardSquares = subBoardSquares.concat(sb.filter( (_, i) => {return i >= y && i < y + 3}));
+  
+  return subBoardSquares;
 }
 
 
