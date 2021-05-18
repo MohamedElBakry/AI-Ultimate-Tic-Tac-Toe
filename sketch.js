@@ -5,6 +5,7 @@
 *
 * Minimax 😎.
 * * DrawCheck on subBoard
+* * Monte Carlo Tree Search 😅
 */
 
 
@@ -129,7 +130,7 @@ function mouseClicked() {
   // print(x, y);
   print(nextCorrespondingSubBoard(x, y));
 
-  // _bestMove(); 
+  // _bestMove();
 
 }
 
@@ -193,7 +194,7 @@ function getSubBoardSquares(board, xOffset, yOffset) {
   const x = xOffset * 3;
   const y = yOffset * 3;
   let subBoardSquares = [];
-  
+
   for (const sb of board.filter( (_, i) => i == x || i == x + 1 || i == x + 2))
     subBoardSquares = subBoardSquares.concat(sb.filter( (_, i) => {return i >= y && i < y + 3}));
   
@@ -233,26 +234,29 @@ function getNext(player) {
 function isValid(movex, movey, board) {
 
   // previousMove has not been set yet, so it's the first move of the game and is always valid
-  if (game.previousMove === null) {
+  if (game.previousMove === null)
     return true;
-  }
-
+  
   const square = board[movex][movey];
   const pickedSubBoard = getParentSubBoard(movex, movey);
   const subBoardToPlay = nextCorrespondingSubBoard(game.previousMove.x, game.previousMove.y);
-  const isCorrectSubBoard = pickedSubBoard.x == subBoardToPlay.x && pickedSubBoard.y == subBoardToPlay.y;
+  const isCorrectSubBoard = (pickedSubBoard.x == subBoardToPlay.x) && (pickedSubBoard.y == subBoardToPlay.y);
   const isEmptySubBoard = subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
-
-  if (square == game.none && isEmptySubBoard && isCorrectSubBoard) {
-    return true;
-  } 
-
-  // If a player is sent to a won or **drawn** sub-board, they can play anywhere
-  // todo: apply if drawn sub-board 
-  if (subBoardStates[subBoardToPlay.x][subBoardToPlay.y] != game.none && !isCorrectSubBoard && square == game.none)
-    return true;
   
-  return false;
+  if (square != game.none)  // If the square isn't empty it's always false
+    return false;
+
+  // Special condition where a player is sent to a won/drawn subgrid
+  if (isEmptySubBoard && !isCorrectSubBoard && subBoardStates[subBoardToPlay.x][subBoardToPlay.y] != game.none) 
+    return true;
+
+  if (!isEmptySubBoard)   // If the picked sub-board isn't empty -- false
+    return false;
+  
+  if (!isCorrectSubBoard)      
+    return false;
+  
+  return true;
 }
 
 
