@@ -8,7 +8,6 @@
 * * Monte Carlo Tree Search 😅
 */
 
-
 const game = {
   none: 0,
   X: 1,
@@ -24,7 +23,7 @@ const subBoard = [
   0, 0, 0
 ];
 
-const subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+let subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
 // Create a 9 by 9 board
 // by copying the subBoard 9 times to create 9 rows and columns.
@@ -38,11 +37,24 @@ const players = [game.X, game.O];
 let currentPlayer;
 const getSymbol = (n) => (n == game.X ? "X" : "O");
 
+const horizontalWin = [ [[0, 0], [0, 1], [0, 2]], 
+                      [[1, 0], [1, 1], [1, 2]],
+                      [[2, 0], [2, 1], [2, 2]] ];
+
+const verticalWin = [ [[0, 0], [1, 0], [2, 0]], 
+                    [[0, 1], [1, 1], [2, 1]],
+                    [[0, 2], [1, 2], [2, 2]] ];
+
+const diagonalWin = [ [[0, 0], [1, 1], [2, 2]],
+                    [[0, 2], [1, 1], [2, 0]] ];
+
+const winningLines = horizontalWin.concat(verticalWin).concat(diagonalWin);
+
 
 function setup() {
-  createCanvas(700, 700);
+  createCanvas(500, 500);
   // currentPlayer = random(players);
-  currentPlayer = game.O;
+  currentPlayer = humanPlayer;
   // _bestMove();
   // board[1][1] = game.X;
   // Ai is X;
@@ -69,14 +81,14 @@ function draw() {
       let pos = board[x][y];
       
       strokeWeight(4);
-      if (pos == game.X) {
+      if (pos == game.O) {
+        ellipse(xp, yp, w / 2);
+      } 
+      else if (pos == game.X) {
         let xr = w / 4;
         // Top right to bottom left, and top left to bottom right
         line(xp + xr, yp - xr, xp - xr, yp + xr);
         line(xp - xr, yp - xr, xp + xr, yp + xr);
-
-      } else if (pos == game.O) {
-        ellipse(xp, yp, w / 2);
       }
 
       // Draw the dividing lines between, extra thick if between sub-boards.
@@ -99,7 +111,7 @@ function draw() {
 
   }
 
-  drawSubBoardWins(board, getNext(currentPlayer));
+  findSubBoardWins(board, true);
 
   const winner = boardWinCheck();
   if (winner) {
@@ -118,8 +130,8 @@ function mouseClicked() {
   const x = floor(mouseY / (height / boardLen));
 
   if (!isValid(x, y, board) || game.gameOver || game.draw) {
-    print("draw:", game.draw);
-    print("victory: ", game.gameOver, getSymbol(getNext(currentPlayer)));
+    // print("draw:", game.draw);
+    // print("victory: ", game.gameOver, getSymbol(getNext(currentPlayer)));
     return;
   }
 
@@ -128,7 +140,7 @@ function mouseClicked() {
   currentPlayer = getNext(currentPlayer);
   // printState(board);
   // print(x, y);
-  print(nextCorrespondingSubBoard(x, y));
+  // print(nextCorrespondingSubBoard(x, y));
 
   // _bestMove();
 
@@ -140,24 +152,24 @@ function mouseClicked() {
 // }
 
 // Find winning line(s)
-function drawSubBoardWins(board) {
+function findSubBoardWins(board, showDrawing) {
 
   for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
     for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
       for (const _line of winningLines) {
 
-        let winner = subBoardWinCheck(board, _line, yOffset, xOffset);
+        let winner = subBoardWinCheck(board, _line, xOffset, yOffset);
         if (!winner) continue; 
 
         subBoardStates[yOffset][xOffset] = winner;
-        drawSubgridWin(_line, xOffset * 3, yOffset * 3);
+        if (showDrawing) drawSubgridWin(_line, xOffset * 3, yOffset * 3);
       }
     }
   }
 }
 
 
-function subBoardWinCheck(board, _line, yOffset, xOffset) {
+function subBoardWinCheck(board, _line, xOffset, yOffset) {
   let winner = null;
 
   if (board[_line[0][0] + (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.X
@@ -190,7 +202,7 @@ function boardWinCheck() {
 
 }
 
-function getSubBoardSquares(board, xOffset, yOffset) {
+function getSubBoardSquares(board, yOffset, xOffset) {
   const x = xOffset * 3;
   const y = yOffset * 3;
   let subBoardSquares = [];
@@ -203,7 +215,7 @@ function getSubBoardSquares(board, xOffset, yOffset) {
 
 
 function isDraw(board) {
- return board.every( (row) => row.every( (square) => square != game.none));
+ return board.every( (row) => row.every( (square) => square == game.X || square == game.O));
 }
 
 
@@ -237,23 +249,31 @@ function isValid(movex, movey, board) {
   if (game.previousMove === null)
     return true;
   
-  const square = board[movex][movey];
+  const pickedSquare = board[movex][movey];
+  // console.log(movex, movey);
   const pickedSubBoard = getParentSubBoard(movex, movey);
+
   const subBoardToPlay = nextCorrespondingSubBoard(game.previousMove.x, game.previousMove.y);
-  const isCorrectSubBoard = (pickedSubBoard.x == subBoardToPlay.x) && (pickedSubBoard.y == subBoardToPlay.y);
-  const isEmptySubBoard = subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
+  const isPickedCorrectSubBoard = (pickedSubBoard.x == subBoardToPlay.x) && (pickedSubBoard.y == subBoardToPlay.y);
+  const isPickedSubBoardEmpty = subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
   
-  if (square != game.none)  // If the square isn't empty it's always false
+  if (pickedSquare != game.none)  // If the square isn't empty it's always false
     return false;
 
+  // if sub-board to play in is full, then we can play anywhere
+  if (getSubBoardSquares(board, subBoardToPlay.y, subBoardToPlay.x).every( (sq) => sq == game.X || sq == game.O))
+    return true;
   // Special condition where a player is sent to a won/drawn subgrid
-  if (isEmptySubBoard && !isCorrectSubBoard && subBoardStates[subBoardToPlay.x][subBoardToPlay.y] != game.none) 
+  // the picked sub-board is empty, and it isn't the sub-board to play in, the sub-board-to play in is won/drawn
+  const isCorrectSubBoardLegal = subBoardStates[subBoardToPlay.x][subBoardToPlay.y] == game.none;
+
+  if (isPickedSubBoardEmpty && !isPickedCorrectSubBoard && !isCorrectSubBoardLegal) 
     return true;
 
-  if (!isEmptySubBoard)   // If the picked sub-board isn't empty -- false
+  if (!isPickedSubBoardEmpty)   // If the picked sub-board isn't empty -- false
     return false;
   
-  if (!isCorrectSubBoard)      
+  if (!isPickedCorrectSubBoard)      
     return false;
   
   return true;
@@ -295,7 +315,6 @@ function printState(board) {
       if ( (y + 1) % 3 == 0)
         rowStr += "| ";
     }
-
     console.log(rowStr);
   }
 
