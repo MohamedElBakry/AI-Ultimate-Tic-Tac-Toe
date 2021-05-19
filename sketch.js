@@ -156,6 +156,7 @@ function findSubBoardWins(board, showDrawing) {
 
   for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
     for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
+      subBoardStates[yOffset][xOffset] = game.none;
       for (const _line of winningLines) {
 
         let winner = subBoardWinCheck(board, _line, xOffset, yOffset);

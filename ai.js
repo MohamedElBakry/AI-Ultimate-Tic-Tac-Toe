@@ -68,15 +68,15 @@ function _bestMove() {
 
 // 
 function _alphaBetaPruning(depth, board, alpha, beta, isMaxing) {
-  let result = evaluate();
-
+  
   findSubBoardWins(board, false);
-  const absoluteWinner = boardWinCheck();
-  if (absoluteWinner == humanPlayer)
+  let absoluteWinner = boardWinCheck();
+  if (absoluteWinner === humanPlayer)
     return -Infinity;
-  else if (absoluteWinner == AI)
+  else if (absoluteWinner === AI)
     return Infinity;
-
+  
+  let result = evaluate();
   // if (result !== null)
   if (depth === 0)
     return result;
@@ -171,9 +171,9 @@ function evaluate() {
       if (subBoardPointedTo != game.none) {
         // console.log(x, y, square);
         if (square == AI)
-          evalu -= 20;
+          evalu -= 50;
         else if (square == humanPlayer)
-          evalu += 20;
+          evalu += 50;
       } 
     }
   }
