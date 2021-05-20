@@ -50,6 +50,8 @@ const diagonalWin = [ [[0, 0], [1, 1], [2, 2]],
 
 const winningLines = horizontalWin.concat(verticalWin).concat(diagonalWin);
 
+// Draw the highlighting rectangle coordinates off screen initially as all moves are valid then.
+const nextSubBoardToPlay = [-2, -2];
 
 function setup() {
   createCanvas(500, 500);
@@ -70,6 +72,8 @@ function draw() {
   strokeWeight(4);
   stroke(0);
   noFill();
+
+  // Draw box around corresponding sub-board here! :D
 
   // Draw the board
   for (let x = 0; x < boardLen; x++) {
@@ -111,6 +115,13 @@ function draw() {
 
   }
 
+  strokeWeight(10);
+  stroke(0, 125, 255);
+  
+  let [sbx, sby] = [nextSubBoardToPlay[0], nextSubBoardToPlay[1]];
+
+  rect(w * (sbx * 3), h * sby * 3, w * 3, h * 3);
+
   findSubBoardWins(board, true);
 
   const winner = boardWinCheck();
@@ -130,19 +141,20 @@ function mouseClicked() {
   const x = floor(mouseY / (height / boardLen));
 
   if (!isValid(x, y, board) || game.gameOver || game.draw) {
-    // print("draw:", game.draw);
-    // print("victory: ", game.gameOver, getSymbol(getNext(currentPlayer)));
     return;
   }
 
   board[x][y] = currentPlayer;
   game.previousMove = {y, x};
   currentPlayer = getNext(currentPlayer);
-  // printState(board);
-  // print(x, y);
-  // print(nextCorrespondingSubBoard(x, y));
+  let subBoardCoords = getNextSubBoard(x, y);
+  nextSubBoardToPlay[0] = subBoardCoords.y;
+  nextSubBoardToPlay[1] = subBoardCoords.x;
 
-  // _bestMove();
+  const aiMove = _bestMove();
+  subBoardCoords = getNextSubBoard(aiMove.x, aiMove.y);
+  nextSubBoardToPlay[0] = subBoardCoords.y;
+  nextSubBoardToPlay[1] = subBoardCoords.x;
 
 }
 
@@ -254,7 +266,7 @@ function isValid(movex, movey, board) {
   // console.log(movex, movey);
   const pickedSubBoard = getParentSubBoard(movex, movey);
 
-  const subBoardToPlay = nextCorrespondingSubBoard(game.previousMove.x, game.previousMove.y);
+  const subBoardToPlay = getNextSubBoard(game.previousMove.x, game.previousMove.y);
   const isPickedCorrectSubBoard = (pickedSubBoard.x == subBoardToPlay.x) && (pickedSubBoard.y == subBoardToPlay.y);
   const isPickedSubBoardEmpty = subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
   
@@ -290,7 +302,7 @@ function getParentSubBoard(movex, movey) {
 
 
 // Return which sub-board the next move should be played in.
-function nextCorrespondingSubBoard(movex, movey) {
+function getNextSubBoard(movex, movey) {
   const x = movex % 3;
   const y = movey % 3;
 

@@ -20,11 +20,20 @@ function _bestMove() {
     }
 
   }
+
+  // If no move has been found then just select the final move anyway as they are all leading to a loss
+  if (bestScore == -Infinity) {
+    bestMove = moves[moves.length - 1];
+    console.log("High probability of loss detected, picking the final move.");
+  }
+
   console.timeEnd("ai best move reply time");
   console.log("move at", bestMove, "with score", bestScore, "at depth", depth);
   board[bestMove.x][bestMove.y] = AI;
   game.previousMove = bestMove;
   currentPlayer = humanPlayer;
+
+  return bestMove;
 }
 
 
@@ -167,24 +176,6 @@ function evaluate() {
   let evalu = null;
   nearWinEnemySubBoards.map( (row) => row.fill(false) );
 
-  //   // For every square, if we point to a complete sub-board then -, and the enemy does then +
-  // // If we point to a near completed sub-board then - points again.
-  // for (let x = 0; x < boardLen; x++) {
-  //   for (let y = 0; y < boardLen; y++) {
-  //     let square = board[x][y];
-  //     let subBoard = nextCorrespondingSubBoard(x, y);
-  //     let subBoardPointedTo = subBoardStates[subBoard.x][subBoard.y];
-  //     // let subBoardIsFull = getSubBoardSquares(board, subBoard.y, subBoard.x).every( (sq) => sq == game.X || sq == game.O);
-  //     if (subBoardPointedTo != game.none) {
-  //       // console.log(x, y, square);
-  //       if (square == AI)
-  //         evalu -= 100;
-  //       else if (square == humanPlayer)
-  //         evalu += 100;
-  //     } 
-  //   }
-  // }
-
   // For every sub-board, match any winning lines and modify the score accordingly
   for (let xOffset = 0; xOffset < 3; xOffset++) {
     for (let yOffset = 0; yOffset < 3; yOffset++) {
@@ -193,6 +184,8 @@ function evaluate() {
         let winner = subBoardWinCheck(board, l, yOffset, xOffset);
         if (winner === AI) {
           evalu += 100;
+          if (xOffset == 1 && yOffset == 1)   // Extra reward for winning the centre sub-board
+            evalu += 100;
         } else if (winner === humanPlayer) {
           evalu -= 100;
         } 
@@ -224,16 +217,16 @@ function evaluate() {
   for (let x = 0; x < boardLen; x++) {
     for (let y = 0; y < boardLen; y++) {
       let square = board[x][y];
-      let subBoard = nextCorrespondingSubBoard(x, y);
+      let subBoard = getNextSubBoard(x, y);
       let subBoardPointedTo = subBoardStates[subBoard.x][subBoard.y];
-      let isNearWonEnemy = nearWinEnemySubBoards[subBoard.x][subBoard.y];
+      let isNearWonEnemySubBoard = nearWinEnemySubBoards[subBoard.x][subBoard.y];
       // let subBoardIsFull = getSubBoardSquares(board, subBoard.y, subBoard.x).every( (sq) => sq == game.X || sq == game.O);
-      if (subBoardPointedTo != game.none || isNearWonEnemy) {
+      if (subBoardPointedTo != game.none || isNearWonEnemySubBoard) {
         // console.log(x, y, square);
         if (square == AI)
-          evalu -= 100;
+          evalu -= 50;
         else if (square == humanPlayer)
-          evalu += 100;
+          evalu += 50;
       } 
     }
   }
