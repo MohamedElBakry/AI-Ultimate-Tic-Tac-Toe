@@ -54,17 +54,14 @@ const winningLines = horizontalWin.concat(verticalWin).concat(diagonalWin);
 const nextSubBoardToPlay = [-2, -2];
 
 function setup() {
-  createCanvas(500, 500);
+  createCanvas(600, 600);
   // currentPlayer = random(players);
   currentPlayer = humanPlayer;
-  // _bestMove();
-  // board[1][1] = game.X;
-  // Ai is X;
 }
 
 
 function draw() {
-  background(255);  
+  background(255);
   
   const w = width / boardLen;
   const h = height / boardLen;
@@ -151,11 +148,14 @@ function mouseClicked() {
   nextSubBoardToPlay[0] = subBoardCoords.y;
   nextSubBoardToPlay[1] = subBoardCoords.x;
 
-  const aiMove = _bestMove();
-  subBoardCoords = getNextSubBoard(aiMove.x, aiMove.y);
-  nextSubBoardToPlay[0] = subBoardCoords.y;
-  nextSubBoardToPlay[1] = subBoardCoords.x;
-
+  // Call the ai move slightly later to allow the draw loop to show the human's previous move.
+  setTimeout(() => {
+      const aiMove = _bestMove();
+      subBoardCoords = getNextSubBoard(aiMove.x, aiMove.y);
+      nextSubBoardToPlay[0] = subBoardCoords.y;
+      nextSubBoardToPlay[1] = subBoardCoords.x;
+    }, 50);
+      
 }
 
 // Mobile support
@@ -172,10 +172,11 @@ function findSubBoardWins(board, showDrawing) {
       for (const _line of winningLines) {
 
         let winner = subBoardWinCheck(board, _line, xOffset, yOffset);
-        if (!winner) continue; 
+        if (!winner) continue;
 
         subBoardStates[yOffset][xOffset] = winner;
         if (showDrawing) drawSubgridWin(_line, xOffset * 3, yOffset * 3);
+        if (winner != game.none) break;     // Only draw one winning line per sub-board
       }
     }
   }

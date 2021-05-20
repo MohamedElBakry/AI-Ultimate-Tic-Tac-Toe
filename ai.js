@@ -152,14 +152,11 @@ function doMove(move, board, player) {
   game.previousMove = move;
 }
 
-// function undoMove(move, board) {
-
-// }
-
 const lineScore = [];
+const lineUnit = 2;
 lineScore[0] = 0;
-lineScore[AI] = 1;
-lineScore[humanPlayer] = -1;
+lineScore[AI] = lineUnit;
+lineScore[humanPlayer] = -lineUnit;
   
 // Evaluate the current state of the game.
 // TODO: moves that send a player to a full sub-board are bad?#
@@ -198,8 +195,8 @@ function evaluate() {
           var currentLineScore = lineScore[lineP1] + lineScore[lineP2] + lineScore[lineP3];
         // }
 
-        // If there's a sub-board with two or more X's or O's in a line
-        if (abs(currentLineScore) > 1) {
+        // If there's a sub-board with two or more X's or O's in a line inside it
+        if (abs(currentLineScore) > lineScore[AI]) {
           evalu += currentLineScore;
           
           // If the line score is negative then this is an enemy sub-board
@@ -211,6 +208,20 @@ function evaluate() {
     }
   }
 
+  // Do the same for sub-boards in the context of the full board
+  // This way, we favour won sub-boards that are within proximity each other for us, and spread out for the opponent
+  // So a game winning line can be more easily found for us and less so for the opponent.
+  for (let sbLine = 0; sbLine < winningLines.length; sbLine++) {
+    let sbLineP1 = subBoardStates[winningLines[sbLine][0][0]][winningLines[sbLine][0][1]];
+    let sbLineP2 = subBoardStates[winningLines[sbLine][1][0]][winningLines[sbLine][1][1]];
+    let sbLineP3 = subBoardStates[winningLines[sbLine][2][0]][winningLines[sbLine][2][1]];
+    let currentSBLineScore = lineScore[sbLineP1] + lineScore[sbLineP2] + lineScore[sbLineP3];
+
+    if (abs(currentSBLineScore) > lineScore[AI]) {
+      evalu += currentSBLineScore;
+    }
+    currentSBLineScore = 0;
+  }
 
   // For every square, if we point to a complete sub-board then -, and the enemy does then +
   // If we point to a near completed sub-board then - points again.
