@@ -158,25 +158,32 @@ lineScore[humanPlayer] = -1;
 // -Score if enemy is 2/3 of completing a winning line.
 // -Score if enemy blocked our 2/3 line
 // +Score if we block enemy line
+let nearWinEnemySubBoards = [
+  [false, false, false],   
+  [false, false, false],
+  [false, false, false],
+];
 function evaluate() {
   let evalu = null;
+  nearWinEnemySubBoards.map( (row) => row.fill(false) );
 
-  // For every square, if we point to a complete sub-board then -, and the enemy does then +
-  for (let x = 0; x < boardLen; x++) {
-    for (let y = 0; y < boardLen; y++) {
-      let square = board[x][y];
-      let subBoard = nextCorrespondingSubBoard(x, y);
-      let subBoardPointedTo = subBoardStates[subBoard.x][subBoard.y];
-      // let subBoardIsFull = getSubBoardSquares(board, subBoard.y, subBoard.x).every( (sq) => sq == game.X || sq == game.O);
-      if (subBoardPointedTo != game.none) {
-        // console.log(x, y, square);
-        if (square == AI)
-          evalu -= 50;
-        else if (square == humanPlayer)
-          evalu += 50;
-      } 
-    }
-  }
+  //   // For every square, if we point to a complete sub-board then -, and the enemy does then +
+  // // If we point to a near completed sub-board then - points again.
+  // for (let x = 0; x < boardLen; x++) {
+  //   for (let y = 0; y < boardLen; y++) {
+  //     let square = board[x][y];
+  //     let subBoard = nextCorrespondingSubBoard(x, y);
+  //     let subBoardPointedTo = subBoardStates[subBoard.x][subBoard.y];
+  //     // let subBoardIsFull = getSubBoardSquares(board, subBoard.y, subBoard.x).every( (sq) => sq == game.X || sq == game.O);
+  //     if (subBoardPointedTo != game.none) {
+  //       // console.log(x, y, square);
+  //       if (square == AI)
+  //         evalu -= 100;
+  //       else if (square == humanPlayer)
+  //         evalu += 100;
+  //     } 
+  //   }
+  // }
 
   // For every sub-board, match any winning lines and modify the score accordingly
   for (let xOffset = 0; xOffset < 3; xOffset++) {
@@ -191,20 +198,45 @@ function evaluate() {
         } 
 
         // No need to evaluate line values for sub-boards that have already been won
-        if (!winner) { 
+        // if (!winner) { 
           var lineP1 = board[l[0][0] + (yOffset * 3)][l[0][1] + (xOffset * 3)];
           var lineP2 = board[l[1][0] + (yOffset * 3)][l[1][1] + (xOffset * 3)];
           var lineP3 = board[l[2][0] + (yOffset * 3)][l[2][1] + (xOffset * 3)];
           var currentLineScore = lineScore[lineP1] + lineScore[lineP2] + lineScore[lineP3];
-        }
+        // }
 
         // If there's a sub-board with two or more X's or O's in a line
-        if (abs(currentLineScore) > 1)
+        if (abs(currentLineScore) > 1) {
           evalu += currentLineScore;
-
+          
+          // If the line score is negative then this is an enemy sub-board
+          nearWinEnemySubBoards[yOffset][xOffset] = (currentLineScore < -1) ? true : false;
+        }
         currentLineScore = 0;
+
       }
     }
   }
+
+
+  // For every square, if we point to a complete sub-board then -, and the enemy does then +
+  // If we point to a near completed sub-board then - points again.
+  for (let x = 0; x < boardLen; x++) {
+    for (let y = 0; y < boardLen; y++) {
+      let square = board[x][y];
+      let subBoard = nextCorrespondingSubBoard(x, y);
+      let subBoardPointedTo = subBoardStates[subBoard.x][subBoard.y];
+      let isNearWonEnemy = nearWinEnemySubBoards[subBoard.x][subBoard.y];
+      // let subBoardIsFull = getSubBoardSquares(board, subBoard.y, subBoard.x).every( (sq) => sq == game.X || sq == game.O);
+      if (subBoardPointedTo != game.none || isNearWonEnemy) {
+        // console.log(x, y, square);
+        if (square == AI)
+          evalu -= 100;
+        else if (square == humanPlayer)
+          evalu += 100;
+      } 
+    }
+  }
+
   return evalu;
 }
