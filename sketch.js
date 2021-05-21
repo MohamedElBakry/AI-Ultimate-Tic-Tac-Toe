@@ -22,8 +22,8 @@ class State {
    * @param {boolean} doCopy              // To create a deep copy board and subBoardStates or not.
    */
   constructor(board, subBoardStates, previousMove, turn, doCopy) {
-      this.board = (doCopy) ? board.map((row) => [...row]) : board;
-      this.subBoardStates = (doCopy) ? subBoardStates.map((row) => [...row]) : subBoardStates;
+      this.board = (doCopy) ? board.map((row) => row.slice(0)) : board;
+      this.subBoardStates = (doCopy) ? subBoardStates.map((row) => row.slice(0)) : subBoardStates;
       this.previousMove = previousMove;
       this.turn = turn;
   }
@@ -48,7 +48,7 @@ let subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
 // Create a 9 by 9 board
 // by copying the subBoard 9 times to create 9 rows and columns.
-const board = subBoard.map(() => [...subBoard] );
+const board = subBoard.map(() => subBoard.slice(0));
 
 // const board = subBoardStates;
 
