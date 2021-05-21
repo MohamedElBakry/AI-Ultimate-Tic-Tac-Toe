@@ -8,6 +8,9 @@
 * * Monte Carlo Tree Search 😅
 */
 
+const AI = 1; // 2 == game.O
+const humanPlayer = 2; // 1 == game.X
+
 class State {
     
   /** Create a deep copy of the board and subBoardStates to allow for modification during simulation
@@ -76,6 +79,11 @@ const nextSubBoardToPlay = [-2, -2];
 function setup() {
   createCanvas(600, 600);
   // currentPlayer = random(players);
+  state.board[4][4] = AI;
+  state.previousMove = {x: 4, y: 4};
+  nextSubBoardToPlay[0] = 1;
+  nextSubBoardToPlay[1] = 1;
+
   state.turn = humanPlayer;
   currentPlayer = humanPlayer;
 }

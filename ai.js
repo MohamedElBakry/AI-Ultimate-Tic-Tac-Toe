@@ -1,5 +1,5 @@
-const AI = 1; // 2 == game.O
-const humanPlayer = 2; // 1 == game.X
+// const AI = 1; // 2 == game.O
+// const humanPlayer = 2; // 1 == game.X
 
 function _bestMove() {
   let bestScore = -Infinity;
@@ -9,12 +9,17 @@ function _bestMove() {
 
   const moves = getLegalMoves(localState);
   const depth = (moves.length <= 9) ? 6 : 4;
+  let i = 0;
   for (const move of moves) {
+    i++;
+    let truePreviousMove = localState.previousMove;
     localState.board[move.x][move.y] = AI;
+    localState.previousMove = move;
     localState = new State(localState.board, localState.subBoardStates, localState.previousMove, localState.turn, true);
     let score = _alphaBetaPruning(depth, localState, -Infinity, Infinity, false);
     localState.board[move.x][move.y] = game.none;
-    console.log("Score:", score);
+    localState.previousMove = truePreviousMove;
+    console.log(`Score (${i}/${moves.length}):`, score);
     if (score > bestScore) {
       bestScore = score;
       bestMove = move;
@@ -77,7 +82,6 @@ function _bestMove() {
 
 // }
 
-// 
 function _alphaBetaPruning(depth, state, alpha, beta, isMaxing) {
   
   findSubBoardWins(state, false);
@@ -92,20 +96,19 @@ function _alphaBetaPruning(depth, state, alpha, beta, isMaxing) {
   if (depth === 0)
     return result;
   
-  if (isMaxing) {
-    let maxScore = -Infinity;
+    state = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
+    
+    if (isMaxing) {
+      let maxScore = -Infinity;
     for (const move of getLegalMoves(state)) {
       let truePreviousMove = state.previousMove;
-      // let previousSubBoardState = subBoardStates.map((row) => row.slice(0));   // Deep copy
-      state = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
+      // state = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
       state.board[move.x][move.y] = AI;
       state.previousMove = move;
 
       let score = _alphaBetaPruning(depth - 1, state, alpha, beta, false);
-      state.previousMove = truePreviousMove;
+      // state.previousMove = truePreviousMove;
       state.board[move.x][move.y] = game.none;
-      // game.previousMove = truePreviousMove;
-      // subBoardStates = previousSubBoardState;
       maxScore = max(maxScore, score);
       alpha = max(alpha, score);
       if (beta <= alpha)
@@ -119,16 +122,14 @@ function _alphaBetaPruning(depth, state, alpha, beta, isMaxing) {
       // Make move
       // let previousSubBoardState = subBoardStates.map( (row) => row.slice(0));
       let truePreviousMove = state.previousMove;
-      state = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
+      // state = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
       state.board[move.x][move.y] = humanPlayer;
       state.previousMove = move;
       // Evaluate
       let score = _alphaBetaPruning(depth - 1, state, alpha, beta, true);
       // Undo
-      state.previousMove = truePreviousMove;
+      // state.previousMove = truePreviousMove;
       state.board[move.x][move.y] = game.none;
-      // game.previousMove = truePreviousMove;
-      // subBoardStates = previousSubBoardState;
       // find minimum and prune if necessary
       minScore = min(minScore, score);
       beta = min(beta, score);
@@ -178,7 +179,7 @@ let nearWinEnemySubBoards = [
 ];
 function evaluate(state) {
   let evalu = null;
-  nearWinEnemySubBoards.map( (row) => row.fill(false) );
+  nearWinEnemySubBoards.map((row) => row.fill(false));
 
   // For every sub-board, match any winning lines and modify the score accordingly
   for (let xOffset = 0; xOffset < 3; xOffset++) {
@@ -188,8 +189,8 @@ function evaluate(state) {
         let winner = subBoardWinCheck(state.board, l, yOffset, xOffset);
         if (winner === AI) {
           evalu += 100;
-          if (xOffset == 1 && yOffset == 1)   // Extra reward for winning the centre sub-board
-            evalu += 100;
+          // if (xOffset == 1 && yOffset == 1)   // Extra reward for winning the centre sub-board
+          //   evalu += 100;
         } else if (winner === humanPlayer) {
           evalu -= 100;
         } 
