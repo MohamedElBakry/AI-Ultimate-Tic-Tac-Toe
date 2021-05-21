@@ -8,6 +8,24 @@
 * * Monte Carlo Tree Search 😅
 */
 
+class State {
+    
+  /** Create a deep copy of the board and subBoardStates to allow for modification during simulation
+   *  without the need for proper undoing of moves/actions
+   * @param {number[][]} board 
+   * @param {number[][]} subBoardStates 
+   * @param {{y, x}} previousMove         // This is just an object with an x and y component.
+   * @param {number} turn
+   * @param {boolean} doCopy              // To create a deep copy board and subBoardStates or not.
+   */
+  constructor(board, subBoardStates, previousMove, turn, doCopy) {
+      this.board = (doCopy) ? board.map((row) => [...row]) : board;
+      this.subBoardStates = (doCopy) ? subBoardStates.map((row) => [...row]) : subBoardStates;
+      this.previousMove = previousMove;
+      this.turn = turn;
+  }
+}
+
 const game = {
   none: 0,
   X: 1,
@@ -27,11 +45,13 @@ let subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
 // Create a 9 by 9 board
 // by copying the subBoard 9 times to create 9 rows and columns.
-const board = subBoard.map( () => [...subBoard] );
+const board = subBoard.map(() => [...subBoard] );
 
 // const board = subBoardStates;
 
-const boardLen = board[0].length; 
+const boardLen = board[0].length;
+
+const state = new State(board, subBoardStates, null, humanPlayer, false);
 
 const players = [game.X, game.O];
 let currentPlayer;
@@ -56,6 +76,7 @@ const nextSubBoardToPlay = [-2, -2];
 function setup() {
   createCanvas(600, 600);
   // currentPlayer = random(players);
+  state.turn = humanPlayer;
   currentPlayer = humanPlayer;
 }
 
@@ -119,13 +140,13 @@ function draw() {
 
   rect(w * (sbx * 3), h * sby * 3, w * 3, h * 3);
 
-  findSubBoardWins(board, true);
+  findSubBoardWins(state, true);
 
-  const winner = boardWinCheck();
+  const winner = boardWinCheck(state.subBoardStates);
   if (winner) {
     print("VICTORY FOR", getSymbol(winner));
-    noLoop();
     game.gameOver = true;
+    noLoop();
   }
 
   const isDrawn = isDraw(board);
@@ -137,13 +158,13 @@ function mouseClicked() {
   const y = floor(mouseX / (width / boardLen));
   const x = floor(mouseY / (height / boardLen));
 
-  if (!isValid(x, y, board) || game.gameOver || game.draw) {
+  if (!isValid(x, y, state) || game.gameOver || game.draw) {
     return;
   }
 
-  board[x][y] = currentPlayer;
-  game.previousMove = {y, x};
-  currentPlayer = getNext(currentPlayer);
+  state.board[x][y] = state.turn;
+  state.previousMove = {y, x};
+  state.turn = getNext(state.turn);
   let subBoardCoords = getNextSubBoard(x, y);
   nextSubBoardToPlay[0] = subBoardCoords.y;
   nextSubBoardToPlay[1] = subBoardCoords.x;
@@ -164,18 +185,18 @@ function mouseClicked() {
 // }
 
 // Find winning line(s)
-function findSubBoardWins(board, showDrawing) {
+function findSubBoardWins(state, showDrawing) {
 
   for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
     for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
-      subBoardStates[yOffset][xOffset] = game.none;
-      for (const _line of winningLines) {
+      state.subBoardStates[yOffset][xOffset] = game.none;
+      for (const wLine of winningLines) {
 
-        let winner = subBoardWinCheck(board, _line, xOffset, yOffset);
+        let winner = subBoardWinCheck(state.board, wLine, xOffset, yOffset);
         if (!winner) continue;
 
-        subBoardStates[yOffset][xOffset] = winner;
-        if (showDrawing) drawSubgridWin(_line, xOffset * 3, yOffset * 3);
+        state.subBoardStates[yOffset][xOffset] = winner;
+        if (showDrawing) drawSubBoardWin(wLine, xOffset * 3, yOffset * 3);
         if (winner != game.none) break;     // Only draw one winning line per sub-board
       }
     }
@@ -183,17 +204,17 @@ function findSubBoardWins(board, showDrawing) {
 }
 
 
-function subBoardWinCheck(board, _line, xOffset, yOffset) {
+function subBoardWinCheck(board, wLine, xOffset, yOffset) {
   let winner = null;
 
-  if (board[_line[0][0] + (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.X
-    && board[_line[1][0] + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.X
-    && board[_line[2][0] + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.X) {
+  if (board[wLine[0][0] + (yOffset * 3)][wLine[0][1] + (xOffset * 3)] == game.X
+  && board[wLine[1][0] + (yOffset * 3)][wLine[1][1] + (xOffset * 3)] == game.X
+    && board[wLine[2][0] + (yOffset * 3)][wLine[2][1] + (xOffset * 3)] == game.X) {
       winner = game.X;
   }
-  else if (board[_line[0][0] + (yOffset * 3)][_line[0][1] + (xOffset * 3)] == game.O
-    && board[_line[1][0] + (yOffset * 3)][_line[1][1] + (xOffset * 3)] == game.O
-    && board[_line[2][0] + (yOffset * 3)][_line[2][1] + (xOffset * 3)] == game.O) {
+  else if (board[wLine[0][0] + (yOffset * 3)][wLine[0][1] + (xOffset * 3)] == game.O
+    && board[wLine[1][0] + (yOffset * 3)][wLine[1][1] + (xOffset * 3)] == game.O
+    && board[wLine[2][0] + (yOffset * 3)][wLine[2][1] + (xOffset * 3)] == game.O) {
       winner = game.O;
   }
 
@@ -202,13 +223,13 @@ function subBoardWinCheck(board, _line, xOffset, yOffset) {
 
 
 // Check if there's a winner across all boards
-function boardWinCheck() {
+function boardWinCheck(subBoardStates) {
 
   for (const player of players) {
-    for (let _line = 0; _line < winningLines.length; _line++) {
-      if (subBoardStates[winningLines[_line][0][0]][winningLines[_line][0][1]] == player 
-        && subBoardStates[winningLines[_line][1][0]][winningLines[_line][1][1]] == player 
-        && subBoardStates[winningLines[_line][2][0]][winningLines[_line][2][1]] == player) {
+    for (let wLine = 0; wLine < winningLines.length; wLine++) {
+      if (subBoardStates[winningLines[wLine][0][0]][winningLines[wLine][0][1]] == player 
+        && subBoardStates[winningLines[wLine][1][0]][winningLines[wLine][1][1]] == player 
+        && subBoardStates[winningLines[wLine][2][0]][winningLines[wLine][2][1]] == player) {
           return player;
       }
     }
@@ -221,8 +242,8 @@ function getSubBoardSquares(board, yOffset, xOffset) {
   const y = yOffset * 3;
   let subBoardSquares = [];
 
-  for (const sb of board.filter( (_, i) => i == x || i == x + 1 || i == x + 2))
-    subBoardSquares = subBoardSquares.concat(sb.filter( (_, i) => {return i >= y && i < y + 3}));
+  for (const subBoard of board.filter( (_, i) => i == x || i == x + 1 || i == x + 2))
+    subBoardSquares = subBoardSquares.concat(subBoard.filter( (_, i) => {return i >= y && i < y + 3}));
   
   return subBoardSquares;
 }
@@ -233,7 +254,7 @@ function isDraw(board) {
 }
 
 
-function drawSubgridWin(_line, xOffset, yOffset) {
+function drawSubBoardWin(_line, xOffset, yOffset) {
 
   if (!_line)
     return;
@@ -257,29 +278,29 @@ function getNext(player) {
   return game.X;
 }
 
-function isValid(movex, movey, board) {
+
+
+function isValid(movex, movey, state) {
 
   // previousMove has not been set yet, so it's the first move of the game and is always valid
-  if (game.previousMove === null)
+  if (state.previousMove === null)
     return true;
   
-  const pickedSquare = board[movex][movey];
-  // console.log(movex, movey);
+  const pickedSquare = state.board[movex][movey];
   const pickedSubBoard = getParentSubBoard(movex, movey);
 
-  const subBoardToPlay = getNextSubBoard(game.previousMove.x, game.previousMove.y);
+  const subBoardToPlay = getNextSubBoard(state.previousMove.x, state.previousMove.y);
   const isPickedCorrectSubBoard = (pickedSubBoard.x == subBoardToPlay.x) && (pickedSubBoard.y == subBoardToPlay.y);
-  const isPickedSubBoardEmpty = subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
-  
+  const isPickedSubBoardEmpty = state.subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
   if (pickedSquare != game.none)  // If the square isn't empty it's always false
     return false;
 
   // if sub-board to play in is full, then we can play anywhere
-  if (getSubBoardSquares(board, subBoardToPlay.y, subBoardToPlay.x).every( (sq) => sq == game.X || sq == game.O))
+  if (getSubBoardSquares(state.board, subBoardToPlay.y, subBoardToPlay.x).every( (square) => square == game.X || square == game.O))
     return true;
   // Special condition where a player is sent to a won/drawn subgrid
   // the picked sub-board is empty, and it isn't the sub-board to play in, the sub-board-to play in is won/drawn
-  const isCorrectSubBoardLegal = subBoardStates[subBoardToPlay.x][subBoardToPlay.y] == game.none;
+  const isCorrectSubBoardLegal = state.subBoardStates[subBoardToPlay.x][subBoardToPlay.y] == game.none;
 
   if (isPickedSubBoardEmpty && !isPickedCorrectSubBoard && !isCorrectSubBoardLegal) 
     return true;

@@ -1,19 +1,26 @@
+
 const AI = 1; // 2 == game.O
 const humanPlayer = 2; // 1 == game.X
+
+class Agent {
+
+    constructor(State) {
+        this.State = State;
+    }
+}
 
 function _bestMove() {
   let bestScore = -Infinity;
   let bestMove;
-  let localState = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
+
   console.time("ai best move reply time");
 
-  const moves = getLegalMoves(localState);
+  const moves = getLegalMoves(board);
   const depth = (moves.length <= 9) ? 6 : 4;
   for (const move of moves) {
-    localState.board[move.x][move.y] = AI;
-    localState = new State(localState.board, localState.subBoardStates, localState.previousMove, localState.turn, true);
-    let score = _alphaBetaPruning(depth, localState, -Infinity, Infinity, false);
-    localState.board[move.x][move.y] = game.none;
+    board[move.x][move.y] = AI;
+    let score = _alphaBetaPruning(depth, board, -Infinity, Infinity, false);
+    board[move.x][move.y] = game.none;
     console.log("Score:", score);
     if (score > bestScore) {
       bestScore = score;
@@ -30,10 +37,9 @@ function _bestMove() {
 
   console.timeEnd("ai best move reply time");
   console.log("move at", bestMove, "with score", bestScore, "at depth", depth);
-
-  state.board[bestMove.x][bestMove.y] = AI;
-  state.previousMove = bestMove;
-  state.turn = humanPlayer;
+  board[bestMove.x][bestMove.y] = AI;
+  game.previousMove = bestMove;
+  currentPlayer = humanPlayer;
 
   return bestMove;
 }
@@ -78,34 +84,31 @@ function _bestMove() {
 // }
 
 // 
-function _alphaBetaPruning(depth, state, alpha, beta, isMaxing) {
+function _alphaBetaPruning(depth, board, alpha, beta, isMaxing) {
   
-  findSubBoardWins(state, false);
-  let absoluteWinner = boardWinCheck(state.subBoardStates);
+  findSubBoardWins(board, false);
+  let absoluteWinner = boardWinCheck();
   if (absoluteWinner === humanPlayer)
     return -Infinity;
   else if (absoluteWinner === AI)
     return Infinity;
   
-  let result = evaluate(state);
+  let result = evaluate();
   // if (result !== null)
   if (depth === 0)
     return result;
   
   if (isMaxing) {
     let maxScore = -Infinity;
-    for (const move of getLegalMoves(state)) {
-      let truePreviousMove = state.previousMove;
-      // let previousSubBoardState = subBoardStates.map((row) => row.slice(0));   // Deep copy
-      state = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
-      state.board[move.x][move.y] = AI;
-      state.previousMove = move;
-
-      let score = _alphaBetaPruning(depth - 1, state, alpha, beta, false);
-      state.previousMove = truePreviousMove;
-      state.board[move.x][move.y] = game.none;
-      // game.previousMove = truePreviousMove;
-      // subBoardStates = previousSubBoardState;
+    for (const move of getLegalMoves(board)) {
+      let truePreviousMove = game.previousMove;
+      let previousSubBoardState = subBoardStates.map((row) => row.slice(0));   // Shallow copy
+      board[move.x][move.y] = AI;
+      game.previousMove = move;
+      let score = _alphaBetaPruning(depth - 1, board, alpha, beta, false);
+      board[move.x][move.y] = game.none;
+      game.previousMove = truePreviousMove;
+      subBoardStates = previousSubBoardState;
       maxScore = max(maxScore, score);
       alpha = max(alpha, score);
       if (beta <= alpha)
@@ -115,20 +118,18 @@ function _alphaBetaPruning(depth, state, alpha, beta, isMaxing) {
   } 
   else if (!isMaxing) {
     let minScore = Infinity;
-    for (const move of getLegalMoves(state)) {
+    for (const move of getLegalMoves(board)) {
       // Make move
-      // let previousSubBoardState = subBoardStates.map( (row) => row.slice(0));
-      let truePreviousMove = state.previousMove;
-      state = new State(state.board, state.subBoardStates, state.previousMove, state.turn, true);
-      state.board[move.x][move.y] = humanPlayer;
-      state.previousMove = move;
+      let previousSubBoardState = subBoardStates.map( (row) => row.slice(0));
+      let truePreviousMove = game.previousMove;
+      board[move.x][move.y] = humanPlayer;
+      game.previousMove = move;
       // Evaluate
-      let score = _alphaBetaPruning(depth - 1, state, alpha, beta, true);
+      let score = _alphaBetaPruning(depth - 1, board, alpha, beta, true);
       // Undo
-      state.previousMove = truePreviousMove;
-      state.board[move.x][move.y] = game.none;
-      // game.previousMove = truePreviousMove;
-      // subBoardStates = previousSubBoardState;
+      board[move.x][move.y] = game.none;
+      game.previousMove = truePreviousMove;
+      subBoardStates = previousSubBoardState;
       // find minimum and prune if necessary
       minScore = min(minScore, score);
       beta = min(beta, score);
@@ -141,12 +142,12 @@ function _alphaBetaPruning(depth, state, alpha, beta, isMaxing) {
 
 }
 
-function getLegalMoves(state) {
+function getLegalMoves(board) {
     const moves = [];
     
     for (let xs = 0; xs < boardLen; xs++) {
         for (let ys = 0; ys < boardLen; ys++) {
-            if (isValid(ys, xs, state))
+            if (isValid(ys, xs, board))
               moves.push({x: ys, y: xs});
         }
     }
@@ -176,7 +177,7 @@ let nearWinEnemySubBoards = [
   [false, false, false],
   [false, false, false],
 ];
-function evaluate(state) {
+function evaluate() {
   let evalu = null;
   nearWinEnemySubBoards.map( (row) => row.fill(false) );
 
@@ -185,7 +186,7 @@ function evaluate(state) {
     for (let yOffset = 0; yOffset < 3; yOffset++) {
       for (const l of winningLines) {
 
-        let winner = subBoardWinCheck(state.board, l, yOffset, xOffset);
+        let winner = subBoardWinCheck(board, l, yOffset, xOffset);
         if (winner === AI) {
           evalu += 100;
           if (xOffset == 1 && yOffset == 1)   // Extra reward for winning the centre sub-board
@@ -196,9 +197,9 @@ function evaluate(state) {
 
         // No need to evaluate line values for sub-boards that have already been won
         // if (!winner) { 
-          var lineP1 = state.board[l[0][0] + (yOffset * 3)][l[0][1] + (xOffset * 3)];
-          var lineP2 = state.board[l[1][0] + (yOffset * 3)][l[1][1] + (xOffset * 3)];
-          var lineP3 = state.board[l[2][0] + (yOffset * 3)][l[2][1] + (xOffset * 3)];
+          var lineP1 = board[l[0][0] + (yOffset * 3)][l[0][1] + (xOffset * 3)];
+          var lineP2 = board[l[1][0] + (yOffset * 3)][l[1][1] + (xOffset * 3)];
+          var lineP3 = board[l[2][0] + (yOffset * 3)][l[2][1] + (xOffset * 3)];
           var currentLineScore = lineScore[lineP1] + lineScore[lineP2] + lineScore[lineP3];
         // }
 
@@ -207,8 +208,7 @@ function evaluate(state) {
           evalu += currentLineScore;
           
           // If the line score is negative then this is an enemy sub-board
-          // nearWinEnemySubBoards[yOffset][xOffset] = (currentLineScore < -1) ? true : false;
-          nearWinEnemySubBoards[yOffset][xOffset] = true;
+          nearWinEnemySubBoards[yOffset][xOffset] = (currentLineScore < -1) ? true : false;
         }
         currentLineScore = 0;
 
@@ -220,9 +220,9 @@ function evaluate(state) {
   // This way, we favour won sub-boards that are within proximity each other for us, and spread out for the opponent
   // So a game winning line can be more easily found for us and less so for the opponent.
   for (let sbLine = 0; sbLine < winningLines.length; sbLine++) {
-    let sbLineP1 = state.subBoardStates[winningLines[sbLine][0][0]][winningLines[sbLine][0][1]];
-    let sbLineP2 = state.subBoardStates[winningLines[sbLine][1][0]][winningLines[sbLine][1][1]];
-    let sbLineP3 = state.subBoardStates[winningLines[sbLine][2][0]][winningLines[sbLine][2][1]];
+    let sbLineP1 = subBoardStates[winningLines[sbLine][0][0]][winningLines[sbLine][0][1]];
+    let sbLineP2 = subBoardStates[winningLines[sbLine][1][0]][winningLines[sbLine][1][1]];
+    let sbLineP3 = subBoardStates[winningLines[sbLine][2][0]][winningLines[sbLine][2][1]];
     let currentSBLineScore = lineScore[sbLineP1] + lineScore[sbLineP2] + lineScore[sbLineP3];
 
     if (abs(currentSBLineScore) > lineScore[AI]) {
@@ -235,9 +235,9 @@ function evaluate(state) {
   // If we point to a near completed sub-board then - points again.
   for (let x = 0; x < boardLen; x++) {
     for (let y = 0; y < boardLen; y++) {
-      let square = state.board[x][y];
+      let square = board[x][y];
       let subBoard = getNextSubBoard(x, y);
-      let subBoardPointedTo = state.subBoardStates[subBoard.x][subBoard.y];
+      let subBoardPointedTo = subBoardStates[subBoard.x][subBoard.y];
       let isNearWonEnemySubBoard = nearWinEnemySubBoards[subBoard.x][subBoard.y];
       // let subBoardIsFull = getSubBoardSquares(board, subBoard.y, subBoard.x).every( (sq) => sq == game.X || sq == game.O);
       if (subBoardPointedTo != game.none || isNearWonEnemySubBoard) {
