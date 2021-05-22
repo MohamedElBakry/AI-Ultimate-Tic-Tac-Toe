@@ -20,17 +20,17 @@ const board = subBoard.map(() => subBoard.slice(0));
 const state = new State(board, subBoardStates, null, game.O, false);
 const players = [game.X, game.O];
 
-const horizontalWin = [ 
-[[0, 0], [0, 1], [0, 2]], 
+const horizontalWin = [
+[[0, 0], [0, 1], [0, 2]],
 [[1, 0], [1, 1], [1, 2]],
 [[2, 0], [2, 1], [2, 2]] ];
 
-const verticalWin = [ 
-[[0, 0], [1, 0], [2, 0]], 
+const verticalWin = [
+[[0, 0], [1, 0], [2, 0]],
 [[0, 1], [1, 1], [2, 1]],
 [[0, 2], [1, 2], [2, 2]] ];
 
-const diagonalWin = [ 
+const diagonalWin = [
 [[0, 0], [1, 1], [2, 2]],
 [[0, 2], [1, 1], [2, 0]] ];
 
@@ -55,7 +55,7 @@ function setup() {
 
 function draw() {
   background(255);
-  
+
   const w = width / BOARD_LEN;
   const h = height / BOARD_LEN;
 
@@ -66,15 +66,15 @@ function draw() {
   // Draw the board
   for (let x = 0; x < BOARD_LEN; x++) {
     for (let y = 0; y < BOARD_LEN; y++) {
-      
+
       let pos = board[x][y];
       let xp = w * y + w / 2;
       let yp = h * x + h / 2;
 
       strokeWeight(4);
       if (pos == game.O) {
-        ellipse(xp, yp, w / 2);  // Radius is w / 2 to make the circle slightly smaller than the square its in
-      } 
+        ellipse(xp, yp, w / 2);  // Radius is w / 2 to make the circle slightly smaller than the square its in.
+      }
       else if (pos == game.X) {
         // Top right to bottom left, and top left to bottom right
         drawX(w, xp, yp);
@@ -95,11 +95,16 @@ function draw() {
   findSubBoardWins(state, true);
   const winner = boardWinCheck(state.subBoardStates);
   game.draw = isDraw(state.board);
+
   if (winner) {
+    const p = document.createElement("p");
+    p.style.fontSize = "xxx-large";
+    p.innerText = `${getSymbol(winner)} wins!!!`;
+    document.querySelector("main").appendChild(p);
     console.log("VICTORY FOR", getSymbol(winner));
     game.gameOver = true;
     noLoop();
-  } 
+  }
 
 
 }
@@ -174,8 +179,8 @@ function makeAIMove() {
 
 /** Loops through the state to find winning lines within sub-boards.
  * @param {State} state - The current state of the game.
- * @param {boolean} showDrawing - Whether or not to draw the winning lines. 
- * This is used during the Agent's search to find a winning line without making an unnecessary draw call. 
+ * @param {boolean} showDrawing - Whether or not to draw the winning lines.
+ * This is used during the Agent's search to find a winning line without making an unnecessary draw call.
  */
 function findSubBoardWins(state, showDrawing) {
 
@@ -196,11 +201,11 @@ function findSubBoardWins(state, showDrawing) {
 }
 
 /** Indexes all the squares of a specified sub-board with the coordinates of a winning line to discover a win or not.
- * @param {number[][]} board - A 2D number array which represents the current board state. 
- * @param {number[][]} wLine - A 2D number array that contains the coordinates of a winning line. (Horizontal, Vertical, Diagonal)  
+ * @param {number[][]} board - A 2D number array which represents the current board state.
+ * @param {number[][]} wLine - A 2D number array that contains the coordinates of a winning line. (Horizontal, Vertical, Diagonal)
  * @param {number} xOffset - A number indicating the x offset by which to index the board to only target a particular sub-board
  * @param {*} yOffset - Like xOffset, but is the y offset for indexing the board.
- * @returns {number} - Either @var game.X or, @var game.O to indicate if that piece has won that sub-board. 
+ * @returns {number} - Either @var game.X or, @var game.O to indicate if that piece has won that sub-board.
  */
 function subBoardWinCheck(board, wLine, xOffset, yOffset) {
   let winner = null;
@@ -221,15 +226,15 @@ function subBoardWinCheck(board, wLine, xOffset, yOffset) {
 
 
 /** Check if there's a winner across all boards for any of the 2 players.
- * @param {number[][]} subBoardStates - A 2D numerical array representation of the win/loss state of each sub-board. 
- * @returns {number} - The player that has won the game considering the @param subBoardStates. 
+ * @param {number[][]} subBoardStates - A 2D numerical array representation of the win/loss state of each sub-board.
+ * @returns {number} - The player that has won the game considering the @param subBoardStates.
  */
 function boardWinCheck(subBoardStates) {
 
   for (const player of players) {
     for (let wLine = 0; wLine < winningLines.length; wLine++) {
-      if (subBoardStates[winningLines[wLine][0][0]][winningLines[wLine][0][1]] == player 
-        && subBoardStates[winningLines[wLine][1][0]][winningLines[wLine][1][1]] == player 
+      if (subBoardStates[winningLines[wLine][0][0]][winningLines[wLine][0][1]] == player
+        && subBoardStates[winningLines[wLine][1][0]][winningLines[wLine][1][1]] == player
         && subBoardStates[winningLines[wLine][2][0]][winningLines[wLine][2][1]] == player) {
           return player;
       }
@@ -241,7 +246,7 @@ function boardWinCheck(subBoardStates) {
 
 /** Gives back all the squares that belong to a specific sub-board.
  * @param {number[][]} board - 2D number array which represents the full game board state.
- * @param {number} yOffset - The y offset to index the sub-board by.  
+ * @param {number} yOffset - The y offset to index the sub-board by.
  * @param {number} xOffset - The x offset to index the sub-board by.
  * @returns {number[]} - A number array of squares that belong to the sub-board indexed by @param yOffset and @param xOffset
  */
@@ -252,7 +257,7 @@ function getSubBoardSquares(board, yOffset, xOffset) {
 
   for (const subBoard of board.filter( (_, i) => i == x || i == x + 1 || i == x + 2))
     subBoardSquares = subBoardSquares.concat(subBoard.filter( (_, i) => {return i >= y && i < y + 3}));
-  
+
   return subBoardSquares;
 }
 
@@ -268,7 +273,7 @@ function isDraw(board) {
 
 /** Draws a green line to match the winning line that is achieved by either player in a sub-board.
  * @param {number[][]} wLine - The winning line coordinates to draw the line with.
- * @param {number} xOffset - The sub-board's x coordinate. 
+ * @param {number} xOffset - The sub-board's x coordinate.
  * @param {number} yOffset - The sub-board's y coordinate.
  * @returns {undefined} If @param wLine is not passed, the function returns nothing as an error check.
  */
@@ -290,20 +295,20 @@ function drawSubBoardWin(wLine, xOffset, yOffset) {
 
 
 /** Gets the player who should play the next turn
- * @param {number} player - The player of the current turn. 
- * @returns {number} The number of the next turn's player.  
+ * @param {number} player - The player of the current turn.
+ * @returns {number} The number of the next turn's player.
  */
 function getNext(player) {
   if (player == game.X)
     return game.O
-  
+
   return game.X;
 }
 
 
 /** Checks if a move at a given square is valid or not.
- * @param {number} movex - The picked square's x coordinate. 
- * @param {number} movey - The picked square's y coordinate. 
+ * @param {number} movex - The picked square's x coordinate.
+ * @param {number} movey - The picked square's y coordinate.
  * @param {State} state - The current state of the game.
  * @returns {boolean} True if the move is valid, false if not.
  */
@@ -312,7 +317,7 @@ function isValid(movex, movey, state) {
   // previousMove has not been set yet, so it's the first move of the game and is always valid
   if (state.previousMove === null)
     return true;
-  
+
   const pickedSquare = state.board[movex][movey];
   if (pickedSquare != game.none)  // If the square isn't empty it's always false -- so we make this check first.
     return false;
@@ -330,21 +335,21 @@ function isValid(movex, movey, state) {
   // the picked sub-board is empty, and it isn't the sub-board to play in, the sub-board-to play in is won/drawn
   const isCorrectSubBoardLegal = state.subBoardStates[subBoardToPlay.x][subBoardToPlay.y] == game.none;
 
-  if (isPickedSubBoardEmpty && !isPickedCorrectSubBoard && !isCorrectSubBoardLegal) 
+  if (isPickedSubBoardEmpty && !isPickedCorrectSubBoard && !isCorrectSubBoardLegal)
     return true;
 
   if (!isPickedSubBoardEmpty)   // If the picked sub-board isn't empty -- false
     return false;
-  
-  if (!isPickedCorrectSubBoard)      
+
+  if (!isPickedCorrectSubBoard)
     return false;
-  
+
   return true;
 }
 
 
 /** Return the coordinates of the move's/square's sub-board.
- * @param {number} movex - The move's x coordinate. 
+ * @param {number} movex - The move's x coordinate.
  * @param {number} movey - The move's y coordinate.
  * @returns {object} returns the parent sub-board coordinates in an object with an x and y component.
  */
@@ -368,7 +373,7 @@ function getNextSubBoard(movex, movey) {
 }
 
 /** Mainly used for debugging purposes, this logs to the console a basic text representation of the board.
- * @param {number[][]} board - The 2D numerical representation of the board. 
+ * @param {number[][]} board - The 2D numerical representation of the board.
  */
 function printStateOf(board) {
   console.log("\n");
