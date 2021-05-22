@@ -1,33 +1,5 @@
 /* UTTT
-* 9 by 9 board -- Yay! 😀
-* validation function update -- Done! 😄
-* win game function update -- Yes 😁
-*
-* Minimax 😎.
-* * DrawCheck on subBoard
-* * Monte Carlo Tree Search 😅
 */
-
-const AI = 1; // 2 == game.O
-const humanPlayer = 2; // 1 == game.X
-
-class State {
-    
-  /** Create a deep copy of the board and subBoardStates to allow for modification during simulation
-   *  without the need for proper undoing of moves/actions
-   * @param {number[][]} board 
-   * @param {number[][]} subBoardStates 
-   * @param {{y, x}} previousMove         // This is just an object with an x and y component.
-   * @param {number} turn
-   * @param {boolean} doCopy              // To create a deep copy board and subBoardStates or not.
-   */
-  constructor(board, subBoardStates, previousMove, turn, doCopy) {
-      this.board = (doCopy) ? board.map((row) => row.slice(0)) : board;
-      this.subBoardStates = (doCopy) ? subBoardStates.map((row) => row.slice(0)) : subBoardStates;
-      this.previousMove = previousMove;
-      this.turn = turn;
-  }
-}
 
 const game = {
   none: 0,
@@ -38,22 +10,14 @@ const game = {
   previousMove: null
 };
 
-const subBoard = [
-  0, 0, 0,
-  0, 0, 0,
-  0, 0, 0
-];
+const BOARD_LEN = 9;
 
-let subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+const subBoard = new Array(BOARD_LEN).fill(game.none);
+const subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
 // Create a 9 by 9 board
 // by copying the subBoard 9 times to create 9 rows and columns.
 const board = subBoard.map(() => subBoard.slice(0));
-
-// const board = subBoardStates;
-
-const boardLen = board[0].length;
-
 const state = new State(board, subBoardStates, null, humanPlayer, false);
 
 const players = [game.X, game.O];
@@ -75,6 +39,9 @@ const winningLines = horizontalWin.concat(verticalWin).concat(diagonalWin);
 
 // Draw the highlighting rectangle coordinates off screen initially as all moves are valid then.
 const nextSubBoardToPlay = [-2, -2];
+const agentX = new Agent(state, 0, Agent.piece.X);
+const agentO = new Agent(state, 0, Agent.piece.O);
+
 
 function setup() {
   createCanvas(600, 600);
@@ -92,79 +59,91 @@ function setup() {
 function draw() {
   background(255);
   
-  const w = width / boardLen;
-  const h = height / boardLen;
+  const w = width / BOARD_LEN;
+  const h = height / BOARD_LEN;
 
   strokeWeight(4);
   stroke(0);
   noFill();
 
-  // Draw box around corresponding sub-board here! :D
-
   // Draw the board
-  for (let x = 0; x < boardLen; x++) {
-    for (let y = 0; y < boardLen; y++) {
+  for (let x = 0; x < BOARD_LEN; x++) {
+    for (let y = 0; y < BOARD_LEN; y++) {
       
+      let pos = board[x][y];
       let xp = w * y + w / 2;
       let yp = h * x + h / 2;
 
-      let pos = board[x][y];
-      
       strokeWeight(4);
       if (pos == game.O) {
-        ellipse(xp, yp, w / 2);
+        ellipse(xp, yp, w / 2);  // Radius is w / 2 to make the circle slightly smaller than the square its in
       } 
       else if (pos == game.X) {
-        let xr = w / 4;
         // Top right to bottom left, and top left to bottom right
-        line(xp + xr, yp - xr, xp - xr, yp + xr);
-        line(xp - xr, yp - xr, xp + xr, yp + xr);
+        drawX(w, xp, yp);
       }
 
-      // Draw the dividing lines between, extra thick if between sub-boards.
-      strokeWeight(4);
-      line(w * (x + 1), 0, w * (x + 1), height);
-      line(0, h * (y + 1), width, h * (y + 1));
-      
-      // Thicker/weightier because this is a seperate sub-board.
-      if ( (y + 1) % 3 == 0) {
-        strokeWeight(10);
-        line(0, h * (y + 1), width, h * (y + 1));
-      }
+      // Draw the dividing lines between, and extra thick horizontal lines if between sub-boards.
+      drawDividingLines(w, x, h, y);
     }
 
-    // Thicker/weightier because this is a seperate sub-board.
-    if ((x + 1) % 3 == 0) {
-      strokeWeight(10);
-      line(w * (x + 1), 0, w * (x + 1), height);
-    }
+    // Thicker/weightier vertical lines because this is a seperate sub-board.
+    drawThickerVerticalLines(x, w);
 
   }
 
-  strokeWeight(10);
-  stroke(0, 125, 255);
-  
-  let [sbx, sby] = [nextSubBoardToPlay[0], nextSubBoardToPlay[1]];
+  highlightNextSubBoard(w, h);
 
-  rect(w * (sbx * 3), h * sby * 3, w * 3, h * 3);
 
   findSubBoardWins(state, true);
-
   const winner = boardWinCheck(state.subBoardStates);
+  game.draw = isDraw(state.board);
   if (winner) {
-    print("VICTORY FOR", getSymbol(winner));
+    console.log("VICTORY FOR", getSymbol(winner));
     game.gameOver = true;
     noLoop();
-  }
+  } 
 
-  const isDrawn = isDraw(board);
-  game.draw = isDrawn;
+
 }
 
 
+function highlightNextSubBoard(w, h) {
+  strokeWeight(10);
+  stroke(0, 125, 255);
+
+  let [sbx, sby] = [nextSubBoardToPlay[0], nextSubBoardToPlay[1]];
+  rect(w * (sbx * 3), h * sby * 3, w * 3, h * 3);
+}
+
+function drawThickerVerticalLines(x, w) {
+  if ((x + 1) % 3 == 0) {
+    strokeWeight(10);
+    line(w * (x + 1), 0, w * (x + 1), height);
+  }
+}
+
+function drawDividingLines(w, x, h, y) {
+  line(w * (x + 1), 0, w * (x + 1), height); // Vertical lines
+  line(0, h * (y + 1), width, h * (y + 1)); // Horizontal lines
+
+
+  // Thicker/weightier because this is a seperate sub-board.
+  if ((y + 1) % 3 == 0) {
+    strokeWeight(10);
+    line(0, h * (y + 1), width, h * (y + 1));
+  }
+}
+
+function drawX(w, xp, yp) {
+  let xr = w / 4;
+  line(xp + xr, yp - xr, xp - xr, yp + xr);
+  line(xp - xr, yp - xr, xp + xr, yp + xr);
+}
+
 function mouseClicked() {
-  const y = floor(mouseX / (width / boardLen));
-  const x = floor(mouseY / (height / boardLen));
+  const y = floor(mouseX / (width / BOARD_LEN));
+  const x = floor(mouseY / (height / BOARD_LEN));
 
   if (!isValid(x, y, state) || game.gameOver || game.draw) {
     return;
@@ -178,8 +157,8 @@ function mouseClicked() {
   nextSubBoardToPlay[1] = subBoardCoords.x;
 
   // Call the ai move slightly later to allow the draw loop to show the human's previous move.
-  setTimeout(() => {
-      const aiMove = _bestMove();
+    setTimeout(() => {
+      const aiMove = agentX.playOptimalMove();
       subBoardCoords = getNextSubBoard(aiMove.x, aiMove.y);
       nextSubBoardToPlay[0] = subBoardCoords.y;
       nextSubBoardToPlay[1] = subBoardCoords.x;
@@ -192,11 +171,15 @@ function mouseClicked() {
 //   mouseClicked();
 // }
 
-// Find winning line(s)
+/** Loops through the state to find winning lines within sub-boards.
+ * @param {State} state - The current state of the game.
+ * @param {boolean} showDrawing - Whether or not to draw the winning lines. 
+ * This is used during the Agent's search to find a winning line without making an unnecessary draw call. 
+ */
 function findSubBoardWins(state, showDrawing) {
 
-  for (let xOffset = 0; xOffset < floor(boardLen / 3); xOffset++) {
-    for (let yOffset = 0; yOffset < floor(boardLen / 3); yOffset++) {
+  for (let xOffset = 0; xOffset < floor(BOARD_LEN / 3); xOffset++) {
+    for (let yOffset = 0; yOffset < floor(BOARD_LEN / 3); yOffset++) {
       state.subBoardStates[yOffset][xOffset] = game.none;
       for (const wLine of winningLines) {
 
@@ -211,7 +194,13 @@ function findSubBoardWins(state, showDrawing) {
   }
 }
 
-
+/** Indexes all the squares of a specified sub-board with the coordinates of a winning line to discover a win or not.
+ * @param {number[][]} board - A 2D number array which represents the current board state. 
+ * @param {number[][]} wLine - A 2D number array that contains the coordinates of a winning line. (Horizontal, Vertical, Diagonal)  
+ * @param {number} xOffset - A number indicating the x offset by which to index the board to only target a particular sub-board
+ * @param {*} yOffset - Like xOffset, but is the y offset for indexing the board.
+ * @returns {number} - Either @var game.X or, @var game.O to indicate if that piece has won that sub-board. 
+ */
 function subBoardWinCheck(board, wLine, xOffset, yOffset) {
   let winner = null;
 
@@ -230,7 +219,10 @@ function subBoardWinCheck(board, wLine, xOffset, yOffset) {
 }
 
 
-// Check if there's a winner across all boards
+/** Check if there's a winner across all boards for any of the 2 players.
+ * @param {number[][]} subBoardStates - A 2D numerical array representation of the win/loss state of each sub-board. 
+ * @returns {number} - The player that has won the game considering the @param subBoardStates. 
+ */
 function boardWinCheck(subBoardStates) {
 
   for (const player of players) {
@@ -245,6 +237,13 @@ function boardWinCheck(subBoardStates) {
 
 }
 
+
+/** Gives back all the squares that belong to a specific sub-board.
+ * @param {number[][]} board - 2D number array which represents the full game board state.
+ * @param {number} yOffset - The y offset to index the sub-board by.  
+ * @param {number} xOffset - The x offset to index the sub-board by.
+ * @returns {number[]} - A number array of squares that belong to the sub-board indexed by @param yOffset and @param xOffset
+ */
 function getSubBoardSquares(board, yOffset, xOffset) {
   const x = xOffset * 3;
   const y = yOffset * 3;
@@ -257,18 +256,28 @@ function getSubBoardSquares(board, yOffset, xOffset) {
 }
 
 
+/** Checks if every square is filled by an X or O.
+ * @param {number[][]} board - The board that contains the position of every piece.
+ * @returns {boolean} true if the game is drawn as every square in @param board contains a piece.
+ */
 function isDraw(board) {
  return board.every( (row) => row.every( (square) => square == game.X || square == game.O));
 }
 
 
-function drawSubBoardWin(_line, xOffset, yOffset) {
+/** Draws a green line to match the winning line that is achieved by either player in a sub-board.
+ * @param {number[][]} wLine - The winning line coordinates to draw the line with.
+ * @param {number} xOffset - The sub-board's x coordinate. 
+ * @param {number} yOffset - The sub-board's y coordinate.
+ * @returns {undefined} If @param wLine is not passed, the function returns nothing as an error check.
+ */
+function drawSubBoardWin(wLine, xOffset, yOffset) {
 
-  if (!_line)
+  if (!wLine)
     return;
 
-  const wh = width / boardLen;
-  const wl = _line;
+  const wh = width / BOARD_LEN;
+  const wl = wLine;
   const xoffset = 0.5;
   const yoffset = 0.5;
 
@@ -279,6 +288,10 @@ function drawSubBoardWin(_line, xOffset, yOffset) {
 }
 
 
+/** Gets the player who should play the next turn
+ * @param {number} player - The player of the current turn. 
+ * @returns {number} The number of the next turn's player.  
+ */
 function getNext(player) {
   if (player == game.X)
     return game.O
@@ -287,7 +300,12 @@ function getNext(player) {
 }
 
 
-
+/** Checks if a move at a given square is valid or not.
+ * @param {number} movex - The picked square's x coordinate. 
+ * @param {number} movey - The picked square's y coordinate. 
+ * @param {State} state - The current state of the game.
+ * @returns {boolean} True if the move is valid, false if not.
+ */
 function isValid(movex, movey, state) {
 
   // previousMove has not been set yet, so it's the first move of the game and is always valid
@@ -295,13 +313,14 @@ function isValid(movex, movey, state) {
     return true;
   
   const pickedSquare = state.board[movex][movey];
+  if (pickedSquare != game.none)  // If the square isn't empty it's always false -- so we make this check first.
+    return false;
+
   const pickedSubBoard = getParentSubBoard(movex, movey);
 
   const subBoardToPlay = getNextSubBoard(state.previousMove.x, state.previousMove.y);
   const isPickedCorrectSubBoard = (pickedSubBoard.x == subBoardToPlay.x) && (pickedSubBoard.y == subBoardToPlay.y);
   const isPickedSubBoardEmpty = state.subBoardStates[pickedSubBoard.x][pickedSubBoard.y] == game.none;
-  if (pickedSquare != game.none)  // If the square isn't empty it's always false
-    return false;
 
   // if sub-board to play in is full, then we can play anywhere
   if (getSubBoardSquares(state.board, subBoardToPlay.y, subBoardToPlay.x).every( (square) => square == game.X || square == game.O))
@@ -323,7 +342,11 @@ function isValid(movex, movey, state) {
 }
 
 
-// Return the coordinates of the move's/square's sub-board.
+/** Return the coordinates of the move's/square's sub-board.
+ * @param {number} movex - The move's x coordinate. 
+ * @param {number} movey - The move's y coordinate.
+ * @returns {object} returns the parent sub-board coordinates in an object with an x and y component.
+ */
 function getParentSubBoard(movex, movey) {
   const x = floor(movex / 3);
   const y = floor(movey / 3);
@@ -331,7 +354,11 @@ function getParentSubBoard(movex, movey) {
 }
 
 
-// Return which sub-board the next move should be played in.
+/** Return which sub-board the next move should be played in.
+ * @param {number} movex - The move's x coordinate
+ * @param {number} movey - The move's y coordinate.
+ * @returns {object} The coordinates of sub-board that the next move should be in. Inside an object with an x and y component.
+ */
 function getNextSubBoard(movex, movey) {
   const x = movex % 3;
   const y = movey % 3;
@@ -339,14 +366,16 @@ function getNextSubBoard(movex, movey) {
   return {x, y};
 }
 
-
-function printState(board) {
+/** Mainly used for debugging purposes, this logs to the console a basic text representation of the board.
+ * @param {number[][]} board - The 2D numerical representation of the board. 
+ */
+function printStateOf(board) {
   console.log("\n");
   let rowStr = "";
 
-  for (let x = 0; x < boardLen; x++) {
+  for (let x = 0; x < BOARD_LEN; x++) {
     rowStr = "";
-    for (let y = 0; y < boardLen; y++) {
+    for (let y = 0; y < BOARD_LEN; y++) {
       let pos = board[x][y];
       if (pos == game.X)
         rowStr += "X, ";
@@ -360,5 +389,4 @@ function printState(board) {
     }
     console.log(rowStr);
   }
-
 }
