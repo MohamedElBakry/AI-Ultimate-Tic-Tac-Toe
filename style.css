@@ -5,30 +5,3 @@ html, body {
 canvas {
   display: block;
 }
-
-/*  Gradient Background Change */
-.css-selector {
-  background: linear-gradient(270deg, rgb(12, 144, 19), rgb(0, 104, 214));
-  background-size: 400% 400%;
-  
-  -webkit-animation: gradient-background 45s ease infinite;
-  -moz-animation: gradient-background 45s ease infinite;
-  animation: gradient-background 45s ease infinite;
-}
-
-@-webkit-keyframes gradient-background {
-  0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
-  100%{background-position:0% 50%}
-}
-@-moz-keyframes gradient-background {
-  0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
-  100%{background-position:0% 50%}
-}
-@keyframes gradient-background {
-  0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
-  100%{background-position:0% 50%}
-}
-

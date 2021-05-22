@@ -1,58 +1,55 @@
-/* UTTT
+/**  Intelligent Systems Project - By Mohamed El Bakry, 18006086.
+* An Intelligent minimax agent with alpha aeta pruning that plays UTTT (Ultimate Tic Tac Toe) versus a human.
 */
+
+"use strict";
 
 const game = {
   none: 0,
   X: 1,
   O: 2,
   gameOver: false,
-  draw: false,
-  previousMove: null
+  draw: false
 };
 
 const BOARD_LEN = 9;
-
 const subBoard = new Array(BOARD_LEN).fill(game.none);
 const subBoardStates = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-
-// Create a 9 by 9 board
-// by copying the subBoard 9 times to create 9 rows and columns.
 const board = subBoard.map(() => subBoard.slice(0));
-const state = new State(board, subBoardStates, null, humanPlayer, false);
 
+const state = new State(board, subBoardStates, null, game.O, false);
 const players = [game.X, game.O];
-let currentPlayer;
-const getSymbol = (n) => (n == game.X ? "X" : "O");
 
-const horizontalWin = [ [[0, 0], [0, 1], [0, 2]], 
-                      [[1, 0], [1, 1], [1, 2]],
-                      [[2, 0], [2, 1], [2, 2]] ];
+const horizontalWin = [ 
+[[0, 0], [0, 1], [0, 2]], 
+[[1, 0], [1, 1], [1, 2]],
+[[2, 0], [2, 1], [2, 2]] ];
 
-const verticalWin = [ [[0, 0], [1, 0], [2, 0]], 
-                    [[0, 1], [1, 1], [2, 1]],
-                    [[0, 2], [1, 2], [2, 2]] ];
+const verticalWin = [ 
+[[0, 0], [1, 0], [2, 0]], 
+[[0, 1], [1, 1], [2, 1]],
+[[0, 2], [1, 2], [2, 2]] ];
 
-const diagonalWin = [ [[0, 0], [1, 1], [2, 2]],
-                    [[0, 2], [1, 1], [2, 0]] ];
+const diagonalWin = [ 
+[[0, 0], [1, 1], [2, 2]],
+[[0, 2], [1, 1], [2, 0]] ];
 
 const winningLines = horizontalWin.concat(verticalWin).concat(diagonalWin);
+
+const getSymbol = (n) => (n == game.X ? "X" : "O");
 
 // Draw the highlighting rectangle coordinates off screen initially as all moves are valid then.
 const nextSubBoardToPlay = [-2, -2];
 const agentX = new Agent(state, 0, Agent.piece.X);
-const agentO = new Agent(state, 0, Agent.piece.O);
+// const agentO = new Agent(state, 0, Agent.piece.O);
 
 
 function setup() {
-  createCanvas(600, 600);
-  // currentPlayer = random(players);
-  state.board[4][4] = AI;
-  state.previousMove = {x: 4, y: 4};
-  nextSubBoardToPlay[0] = 1;
-  nextSubBoardToPlay[1] = 1;
+  createCanvas(900, 900);
+  // Allow the Agent to make the first move. Comment to allow the human to play first.
+  // makeAIMove();
 
-  state.turn = humanPlayer;
-  currentPlayer = humanPlayer;
+  state.turn = agentX.opponentPiece;
 }
 
 
@@ -108,6 +105,7 @@ function draw() {
 }
 
 
+/* Draw loop helper functions */
 function highlightNextSubBoard(w, h) {
   strokeWeight(10);
   stroke(0, 125, 255);
@@ -141,6 +139,7 @@ function drawX(w, xp, yp) {
   line(xp - xr, yp - xr, xp + xr, yp + xr);
 }
 
+/* When the mouse is clicked, if the do the move if it's valid, then let the AI reply  */
 function mouseClicked() {
   const y = floor(mouseX / (width / BOARD_LEN));
   const x = floor(mouseY / (height / BOARD_LEN));
@@ -156,20 +155,22 @@ function mouseClicked() {
   nextSubBoardToPlay[0] = subBoardCoords.y;
   nextSubBoardToPlay[1] = subBoardCoords.x;
 
-  // Call the ai move slightly later to allow the draw loop to show the human's previous move.
-    setTimeout(() => {
-      const aiMove = agentX.playOptimalMove();
-      subBoardCoords = getNextSubBoard(aiMove.x, aiMove.y);
-      nextSubBoardToPlay[0] = subBoardCoords.y;
-      nextSubBoardToPlay[1] = subBoardCoords.x;
-    }, 50);
-      
+  makeAIMove();
 }
 
-// Mobile support
-// function touchStarted() {
-//   mouseClicked();
-// }
+
+function makeAIMove() {
+  // Call the ai move slightly later to allow the draw loop to show the human's previous move.
+  setTimeout(() => {
+    const aiMove = agentX.playOptimalMove();
+    const subBoardCoords = getNextSubBoard(aiMove.x, aiMove.y);
+    nextSubBoardToPlay[0] = subBoardCoords.y;
+    nextSubBoardToPlay[1] = subBoardCoords.x;
+  }, 50);
+}
+
+// Mobile support if needed.
+// touchStarted = mouseClicked;
 
 /** Loops through the state to find winning lines within sub-boards.
  * @param {State} state - The current state of the game.
