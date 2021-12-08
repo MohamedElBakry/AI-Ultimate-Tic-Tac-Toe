@@ -10,10 +10,12 @@ The AI itself is Minimax with Alpha-Beta (α–β) pruning to signficantly speed
  ```shell
  git clone https://github.com/MohamedElBakry/AI-Ultimate-Tic-Tac-Toe.git
  ```
-  3. Run it e.g.: 
+  2. Run it e.g.: 
   ```shell
   python -m http.server
   ```
+  3. Go to a web browser and enter `localhost:8000`.
+
 ### Explained
 To see the project working, please run it on a local server (localhost) as the P5.js library does not work without it.
 For example, if you have NodeJS or Python installed, then from this directory you could run one of the following commands:
