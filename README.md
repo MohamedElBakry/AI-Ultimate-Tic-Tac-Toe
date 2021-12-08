@@ -9,23 +9,18 @@ the previous move influences/limits the options of the next move. That is, each 
 The AI itself is Minimax with Alpha-Beta (α–β) pruning to signficantly speed up the process of travesing the game tree and move options.
 
 ## Running the Project
-### Simplified
-  1. Download the project e.g.: 
+  1. Download the project: 
  ```shell
  git clone https://github.com/MohamedElBakry/AI-Ultimate-Tic-Tac-Toe.git
  ```
-  2. Run it e.g.: 
+  2. In the root directory of the project, serve/run it to localhost e.g.: 
   ```shell
   python -m http.server
   ```
-  3. Go to a web browser and enter `localhost:8000`.
+  3. Open localhost in a browser and navigate to the src directory. If you used python the command above then follow this link: [localhost](http://localhost:8000/src).
 
-### Explained
-To see the project working, please run it on a local server (localhost) as the P5.js library does not work without it.
-For example, if you have NodeJS or Python installed, then from this directory you could run one of the following commands:
-  1. `python -m http.server`
-  2. `http-server`
-  
+Finally, you may press `F12` to see the AI's evaluation of the current positon in real time.
+
  ## Example Game
  The following image illustrates a game where the AI won versus the developer of this repo.
  
