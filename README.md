@@ -1,6 +1,10 @@
 # AI Ultimate Tic Tac Toe
 This is a university project in JavaScript on Intelligent Systems (AI) for the Ultimate Tic Tac Toe game.
-It uses the P5.js library for the graphics. 
+It uses the P5.js library for the graphics.
+
+Ultimate Tic Tac Toe, as the name suggests, is an advanced version of the well-known game, Tic Tac Toe.
+Similarily, the goal is to win 3 sub-boards in a line, and to win a sub-board you must form a line in it. Additionally, here's where it becomes challenging:
+the previous move influences/limits the options of the next move. That is, each square maps to a sub-board. Thus, long-term planning and strategy are key! 
 
 The AI itself is Minimax with Alpha-Beta (α–β) pruning to signficantly speed up the process of travesing the game tree and move options.
 
