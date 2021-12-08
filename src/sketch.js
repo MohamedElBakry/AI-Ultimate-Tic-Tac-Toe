@@ -1,4 +1,4 @@
-/**  Intelligent Systems Project - By Mohamed El Bakry, 18006086.
+/**  Intelligent Systems Project - By Mohamed El Bakry.
 * An Intelligent minimax agent with alpha aeta pruning that plays UTTT (Ultimate Tic Tac Toe) versus a human.
 */
 
