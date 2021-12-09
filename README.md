@@ -15,13 +15,14 @@ The AI itself is Minimax with Alpha-Beta (α–β) pruning to signficantly speed
  ```
   2. In the root directory of the project, serve/run it to localhost e.g.: 
   ```shell
+  cd AI-Ultimate-Tic-Tac-Toe
   python -m http.server
   ```
   3. Open localhost in a browser and navigate to the src directory. If you used python the command above then follow this link: [localhost](http://localhost:8000/src).
 
-Finally, you may press `F12` to see the AI's evaluation of the current positon in real time.
+Finally, while playing you may press `F12` then select the `Console` tab to see the AI's evaluation of the current positon in real time.
 
  ## Example Game
- The following image illustrates a game where the AI won versus the developer of this repo.
+ The following image illustrates a game where the AI, as `X`, won versus the developer of this repo who was `O`.
  
  ![The AI being victorious over a human.](images/Example-AI-Victory.png)
