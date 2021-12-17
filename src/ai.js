@@ -8,6 +8,7 @@ class Agent {
     }
 
     static piece = {
+        none: 0,
         X: 1,
         O: 2
     }
@@ -16,14 +17,26 @@ class Agent {
      * @param {State} state                         The current 'state' of the game.
      * @param {Agent.type|number} type              The type of agent to be initialised. Future iterations of this project should include an MCTS type agent
      * @param {Agent.piece|number} [piece=piece.X]  The type of piece to use.
+     * @param {boolean} [isWorker=false]            Indicates if this agent is a worker or not so that if it is no worker is spawned.
      */
-    constructor(state, type, piece) {
+    constructor(state, type, piece=Agent.piece.X, isWorker=false) {
         this.state = state;
         this.type = type;
         this.piece = piece;
-        this.opponentPiece = getNext(piece);
+        // this.opponentPiece = getNext(piece);
+        this.opponentPiece = piece === Agent.piece.X ? Agent.piece.O : piece;
+        if (!isWorker)
+          this.aiWorker = new Worker("ai-worker.js");
     }
-
+    
+    /**
+     * Create an AI Object from a string
+     * @param {String} string 
+     */
+    static workerFrom(string) {
+      const agentObj = JSON.parse(string);
+      return new Agent(agentObj.state, agentObj.type, agentObj.piece, true);
+    }
 
     /** Generates an array of {x, y} object legal moves given the board state.
      * @param {State} state The current state of the game.
@@ -47,13 +60,7 @@ class Agent {
      * @param {number} [depth=6] -          The maximum search depth, which by default is 6.
      * @param {State} [state=this.state] -  The current state of the game. If null, the internal reference to the game state is used.
      */
-    playOptimalMove(depth, state) {
-      if (!depth)
-        depth = 6;
-
-      if (!state)
-        state = this.state;
-
+    playOptimalMove(depth=6, state=this.state) {
         const LONG_SEARCH = depth;
         const SHORT_SEARCH = 4;
 
@@ -63,16 +70,15 @@ class Agent {
         console.time("ai best move reply time");
 
         const moves = Agent.getLegalMoves(localState);
-        const _depth = (moves.length <= 9) ? LONG_SEARCH : SHORT_SEARCH;
-        let i = 0;
-        for (const move of moves) {
-            i++;
+        depth = (moves.length <= 9) ? LONG_SEARCH : SHORT_SEARCH;
+        for (const [i, move] of moves.entries()) {
             localState.board[move.x][move.y] = this.piece;
             localState.previousMove = move;
             localState = new State(localState.board, localState.subBoardStates, localState.previousMove, localState.turn, true);
-            const score = this.miniMaxAlphaBetaPruning(_depth, localState, -Infinity, Infinity, false);
+            const score = this.miniMaxAlphaBetaPruning(depth, localState, -Infinity, Infinity, false);
+            this.aiWorker?.postMessage([JSON.stringify(this), depth, localState, -Infinity, Infinity, false]);
             localState.board[move.x][move.y] = game.none;
-            console.log(`Score (${i}/${moves.length}):`, score);
+            console.log(`Score (${i+1}/${moves.length}):`, score);
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
@@ -104,18 +110,14 @@ class Agent {
      * @param {State} [state=this.state] Optional - The current state of the game. If not passed as an argument, the Agent's reference when initialised will be used.
      * @returns {number} A numerical evaluation of the current state of the game. Higher means the state favours the Agent.
      */
-    evaluate(state) {
+    evaluate(state=this.state) {
         let evalu = null;
-
-        // Make state a default parameter.
-        if (!state)
-            state = this.state;
 
         const nearWinEnemySubBoards = [
             [false, false, false],
             [false, false, false],
             [false, false, false],
-          ];
+        ];
 
         const lineScore = [];
         const lineUnit = 2;
@@ -143,7 +145,7 @@ class Agent {
                 var currentLineScore = lineScore[lineP1] + lineScore[lineP2] + lineScore[lineP3];
 
               // If there's a sub-board with two or more X's or O's in a line inside it
-                if (abs(currentLineScore) > lineScore[this.piece]) {
+                if (Math.abs(currentLineScore) > lineScore[this.piece]) {
                     evalu += currentLineScore;
                     nearWinEnemySubBoards[yOffset][xOffset] = true;
               }
@@ -163,7 +165,7 @@ class Agent {
           let subBoardLinePoint3 = state.subBoardStates[winningLines[sbLine][2][0]][winningLines[sbLine][2][1]];
           let currentSBLineScore = lineScore[subBoardLinePoint1] + lineScore[subBoardLinePoint2] + lineScore[subBoardLinePoint3];
 
-          if (abs(currentSBLineScore) > lineScore[this.piece]) {
+          if (Math.abs(currentSBLineScore) > lineScore[this.piece]) {
             evalu += currentSBLineScore;
           }
           currentSBLineScore = 0;
@@ -232,8 +234,8 @@ class Agent {
                 // Undo
                 state.board[move.x][move.y] = game.none;
                 // Get max the max utility and prune if necessary
-                maxScore = max(maxScore, score);
-                alpha = max(alpha, score);
+                maxScore = Math.max(maxScore, score);
+                alpha = Math.max(alpha, score);
                 if (beta <= alpha)
                     break;
             }
@@ -250,8 +252,8 @@ class Agent {
                 // Undo
                 state.board[move.x][move.y] = game.none;
                 // find minimum and prune if necessary
-                minScore = min(minScore, score);
-                beta = min(beta, score);
+                minScore = Math.min(minScore, score);
+                beta = Math.min(beta, score);
                 if (beta <= alpha)
                     break;
             }
