@@ -17,4 +17,4 @@ class State {
         this.previousMove = previousMove;
         this.turn = turn;
     }
-  }
+}

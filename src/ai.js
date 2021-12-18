@@ -74,7 +74,7 @@ class Agent {
                     const [score, move] = event.data;
                     // const [score, move] = [event.data[0], workBatches[i % numWorkers][6]];
                     if (typeof score !== 'number')
-                        return;                    
+                        return;
 
                     results.push([score, move]);
                     if (workDone === workBatches.length) {
@@ -96,7 +96,7 @@ class Agent {
      * @param {number} [depth=6] -          The maximum search depth, which by default is 6.
      * @param {State} [state=this.state] -  The current state of the game. If null, the internal reference to the game state is used.
      */
-    async playOptimalMove(depth=6, state=this.state) {
+    async playOptimalMove(depth = 6, state = this.state) {
         const LONG_SEARCH = depth;
         const SHORT_SEARCH = 4;
 
@@ -132,7 +132,7 @@ class Agent {
             localState.board[move.x][move.y] = game.none;
             localState.previousMove = truePrevious;
         }
-        
+
         console.time("threaded");
         const [scoreMovePairs] = await this.getScoresFromThreads(workBatches, navigator.hardwareConcurrency, this.workers);
         // for (let i = 0; i < workers.length; i++)
@@ -146,7 +146,7 @@ class Agent {
                 bestMove = move;
             }
             // console.log(`Move at (${++i}/${moves.length}):`, move, score);   
-            console.log("Moves with their scores:", move, score);   
+            console.log("Moves with their scores:", move, score);
         }
 
         // If no move has been found then just select the final move anyway as they are all leading to a loss
