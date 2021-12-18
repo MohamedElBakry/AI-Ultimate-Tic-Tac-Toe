@@ -4,7 +4,8 @@
 
 "use strict";
 
-const agentX = new Agent(state, 0, Agent.piece.X);
+const agentX = new Agent(state, Agent.type.MINIMAX_ALPHA_BETA_PRUNING, Agent.piece.X);
+let depth;
 
 function setup() {
   createCanvas(900, 900);
@@ -67,8 +68,6 @@ function draw() {
     game.gameOver = true;
     noLoop();
   }
-
-
 }
 
 
@@ -77,8 +76,14 @@ function highlightNextSubBoard(w, h) {
   strokeWeight(10);
   stroke(0, 125, 255);
 
-  let [sbx, sby] = [nextSubBoardToPlay[0], nextSubBoardToPlay[1]];
-  rect(w * (sbx * 3), h * sby * 3, w * 3, h * 3);
+  const [sbx, sby] = [nextSubBoardToPlay[0], nextSubBoardToPlay[1]];
+  const nextSubBoardIsFull = sbx !== -2 && state.subBoardStates[sby][sbx] !== game.none;
+  if (state.previousMove === null || nextSubBoardIsFull) {
+    rect(0, 0, w * BOARD_LEN, w * BOARD_LEN);
+    return;
+  }
+    rect(w * (sbx * 3), h * sby * 3, w * 3, h * 3);
+
 }
 
 function drawThickerVerticalLines(x, w) {
@@ -125,11 +130,14 @@ function mouseClicked() {
   makeAIMove();
 }
 
-
 function makeAIMove() {
+  // if (depth === undefined) {
+  //   depth = +prompt("How many turns ahead do you want the AI to look? (higher -> more challenging) — 6 is recommended.");
+  //   depth = depth ? depth : 6;
+  // }
   // Call the ai move slightly later to allow the draw loop to show the human's previous move.
-  setTimeout(() => {
-    const aiMove = agentX.playOptimalMove();
+  setTimeout(async () => {
+    const aiMove = await agentX.playOptimalMove(depth);
     const subBoardCoords = getNextSubBoard(aiMove.x, aiMove.y);
     nextSubBoardToPlay[0] = subBoardCoords.y;
     nextSubBoardToPlay[1] = subBoardCoords.x;
