@@ -25,7 +25,9 @@ function draw() {
     strokeWeight(4);
     stroke(0);
     noFill();
-
+    
+    rect(0, 0, width, height);
+    
     // Draw the board
     for (let x = 0; x < BOARD_LEN; x++) {
         for (let y = 0; y < BOARD_LEN; y++) {
